@@ -5,10 +5,15 @@ spring:
   config:
     import: optional:file:.env[.properties]
 
+#  datasource:
+#    url: ${DB_URL:jdbc:mysql://localhost:3306/composebean?serverTimezone=Asia/Seoul&characterEncoding=UTF-8}
+#    username: ${DB_USERNAME:root}
+#    password: ${DB_PASSWORD}
+
   datasource:
-    url: ${DB_URL:jdbc:mysql://localhost:3306/composebean?serverTimezone=Asia/Seoul&characterEncoding=UTF-8}
-    username: ${DB_USERNAME:root}
-    password: ${DB_PASSWORD}
+    url: jdbc:mysql://localhost:3306/java_basic?useSSL=false&serverTimezone=UTC&characterEncoding=UTF-8
+    username: root
+    password: ei32ikf
 
   jpa:
     hibernate:
