@@ -1,4 +1,4 @@
-package com.composebean.order.schedular;
+package com.composebean.order.scheduler;
 
 import com.composebean.order.service.OrderBatchService;
 import lombok.RequiredArgsConstructor;
@@ -10,7 +10,7 @@ import org.springframework.stereotype.Component;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class OrderDeliverySchedular {
+public class OrderDeliveryScheduler {
 
     private final OrderBatchService orderBatchService;
 
