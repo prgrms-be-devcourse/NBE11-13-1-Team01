@@ -6,6 +6,7 @@ import com.composebean.product.dto.ProductListResponse;
 import com.composebean.product.dto.ProductResponse;
 import com.composebean.product.dto.ProductStockUpdateRequest;
 import com.composebean.product.dto.ProductUpdateRequest;
+import com.composebean.product.exception.ProductNotFoundException;
 import com.composebean.product.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -60,6 +61,8 @@ public class ProductService {
                 request.getImageUrl()
         );
 
+        productRepository.flush();
+
         return ProductResponse.from(product);
     }
 
@@ -71,6 +74,8 @@ public class ProductService {
         Product product = findProduct(productId);
 
         product.updateStock(request.getStockQuantity());
+
+        productRepository.flush();
 
         return ProductResponse.from(product);
     }
@@ -84,8 +89,6 @@ public class ProductService {
 
     private Product findProduct(Long productId) {
         return productRepository.findById(productId)
-                .orElseThrow(() -> new IllegalArgumentException(
-                        "상품을 찾을 수 없습니다. productId=" + productId
-                ));
+                .orElseThrow(ProductNotFoundException::new);
     }
 }
