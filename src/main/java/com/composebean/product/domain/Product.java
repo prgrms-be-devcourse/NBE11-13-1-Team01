@@ -61,6 +61,38 @@ public class Product {
         this.stockQuantity = stockQuantity;
     }
 
+    public void update(
+            String name,
+            Long price,
+            String description,
+            String imageUrl
+    ) {
+        this.name = name;
+        this.price = price;
+        this.description = description;
+        this.imageUrl = imageUrl;
+    }
+
+    public void updateStock(Integer stockQuantity) {
+        if (stockQuantity == null || stockQuantity < 0) {
+            throw new IllegalArgumentException("재고 수량은 0개 이상이어야 합니다.");
+        }
+
+        this.stockQuantity = stockQuantity;
+    }
+
+    public void decreaseStock(Integer quantity) {
+        if (quantity == null || quantity <= 0) {
+            throw new IllegalArgumentException("차감 수량은 1개 이상이어야 합니다.");
+        }
+
+        if (stockQuantity < quantity) {
+            throw new IllegalArgumentException("재고가 부족합니다.");
+        }
+
+        this.stockQuantity -= quantity;
+    }
+
     @PrePersist
     private void prePersist() {
         LocalDateTime now = LocalDateTime.now();
