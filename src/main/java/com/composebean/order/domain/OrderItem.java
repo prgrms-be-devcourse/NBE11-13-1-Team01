@@ -44,18 +44,26 @@ public class OrderItem {
 
     @Builder
     public OrderItem(
+            Order order,
             Product product,
             Integer quantity,
             Long unitPrice,
             Long subtotal
     ) {
+        this.order = order;
         this.product = product;
         this.quantity = quantity;
         this.unitPrice = unitPrice;
         this.subtotal = subtotal;
     }
 
-    void assignOrder(Order order) {
+    public void assignOrder(Order order) {
         this.order = order;
+    }
+
+    // 기존에 쓰던 수량만 더하는 메서드도 동일 원칙 적용
+    public void addQuantity(Integer quantity) {
+        this.quantity += quantity;
+        this.subtotal = this.unitPrice * this.quantity;
     }
 }

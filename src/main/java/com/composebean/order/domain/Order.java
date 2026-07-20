@@ -20,6 +20,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 @Entity
 @Table(name = "orders")
@@ -71,7 +72,8 @@ public class Order {
             Long totalPrice,
             PaymentStatus paymentStatus,
             DeliveryStatus deliveryStatus,
-            LocalDateTime deliveryExpectedDate
+            LocalDateTime deliveryExpectedDate,
+            LocalDateTime orderedAt
     ) {
         this.email = email;
         this.address = address;
@@ -80,6 +82,7 @@ public class Order {
         this.paymentStatus = paymentStatus;
         this.deliveryStatus = deliveryStatus;
         this.deliveryExpectedDate = deliveryExpectedDate;
+        this.orderedAt = orderedAt;
     }
 
     @PrePersist
@@ -92,7 +95,46 @@ public class Order {
     }
 
     public void addOrderItem(OrderItem orderItem) {
-        orderItems.add(orderItem);
-        orderItem.assignOrder(this);
+        Optional<OrderItem> existingItem = this.orderItems.stream()
+                .filter(item -> item.getProduct().getId().equals(orderItem.getProduct().getId()))
+                // 2. [핵심] 단, 주소값이 서로 다른 놈이어야 함! (자기 자신은 제외)
+                .filter(item -> item != orderItem)
+                .findFirst(); // 맨 처음 값 찾기
+
+        if (existingItem.isPresent()) {
+            // [중요] 기존 아이템의 필드 3개를 한 번에 업데이트
+            existingItem.get().addQuantity(orderItem.getQuantity());
+
+        } else { //대표 주문 영수증에 해당 아이템이 없을 시
+            orderItem.assignOrder(this);
+            this.orderItems.add(orderItem);
+        }
+
+        /*orderItems.add(orderItem);
+        orderItem.assignOrder(this);*/
     }
+
+    public void removeOrderItem(OrderItem orderItem) {
+        this.orderItems.remove(orderItem);
+    }
+
+
+
+    //추가
+    public void updateTotalPrice(Long newTotal) {
+        this.totalPrice = newTotal;
+    }
+
+    public void updateDeliveryStatus(DeliveryStatus deliveryStatus) {
+        this.deliveryStatus = deliveryStatus;
+    }
+
+    public void updatePaymentStatus(PaymentStatus paymentStatus) {
+        this.paymentStatus = paymentStatus;
+    }
+
+    public void updateDeliveryExpectedDate(LocalDateTime deliveryExpectedDate) {
+        this.deliveryExpectedDate = deliveryExpectedDate;
+    }
+
 }
