@@ -64,7 +64,7 @@ public class OrderApiController {
             content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     @PatchMapping("/{orderId}/delivery-status")
     public ResponseEntity<OrderDetailResponse> updateDeliveryStatus(
-            @Valid @ModelAttribute DeliveryStatusUpdateRequest dto,
+            @Valid @RequestBody DeliveryStatusUpdateRequest dto,
             @PathVariable Long orderId) {
         return ResponseEntity.ok(orderUpdateService.updateDeliveryStatus(dto, orderId));
     }

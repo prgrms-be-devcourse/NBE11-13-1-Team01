@@ -5,7 +5,6 @@ import com.composebean.global.exception.ErrorCode;
 import com.composebean.order.domain.Order;
 import com.composebean.order.dto.DeliveryStatusUpdateRequest;
 import com.composebean.order.dto.OrderDetailResponse;
-import com.composebean.order.exception.OrderNotFoundException;
 import com.composebean.order.repository.OrderRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -25,6 +24,6 @@ public class OrderUpdateService {
         if (order == null) {throw new BusinessException(ErrorCode.ORDER_NOT_FOUND);
         }
         order.updateDeliveryStatus(dto.getDeliveryStatus());
-        return orderRepository.getOrderDetail(orderId).orElseThrow(()->new RuntimeException("해당 아이디 없음!"));
+        return orderRepository.getOrderDetail(orderId).orElseThrow(()->new BusinessException(ErrorCode.ORDER_NOT_FOUND));
     }
 }
