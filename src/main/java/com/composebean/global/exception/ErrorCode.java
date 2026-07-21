@@ -18,6 +18,12 @@ public enum ErrorCode {
             "상품을 찾을 수 없습니다."
     ),
 
+    ORDER_NOT_FOUND(
+            HttpStatus.NOT_FOUND,
+            "ORDER_NOT_FOUND",
+            "주문을 찾을 수 없습니다."
+    ),
+
     INTERNAL_SERVER_ERROR(
             HttpStatus.INTERNAL_SERVER_ERROR,
             "INTERNAL_SERVER_ERROR",

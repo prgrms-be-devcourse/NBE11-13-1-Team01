@@ -9,7 +9,7 @@ import org.springframework.data.jpa.repository.Lock;
 import java.time.LocalDateTime;
 import java.util.List;
 
-public interface OrderRepository extends JpaRepository<Order, Long> {
+public interface OrderRepository extends JpaRepository<Order, Long>, OrderRepositoryCustom{
     // orderedAt이 startDate와 endDate 사이인 주문들을 조회
     @Lock(LockModeType.PESSIMISTIC_WRITE) // DB 레코드에 락을 겁니다.
     List<Order> findByOrderedAtBetweenAndPaymentStatus(LocalDateTime start, LocalDateTime end, PaymentStatus paymentStatus);

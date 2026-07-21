@@ -82,7 +82,7 @@ public class Order {
         this.paymentStatus = paymentStatus;
         this.deliveryStatus = deliveryStatus;
         this.deliveryExpectedDate = deliveryExpectedDate;
-        this.orderedAt = orderedAt;
+        this.orderedAt = orderedAt;  //pre 속성 땜에 나중에 지워야함
     }
 
     @PrePersist
