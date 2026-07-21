@@ -5,10 +5,14 @@ import com.composebean.order.domain.Order;
 import com.composebean.order.domain.PaymentStatus;
 import com.composebean.order.dto.OrderCreateRequest;
 import com.composebean.order.dto.OrderCreateResponse;
+import com.composebean.order.dto.OrderDetailResponse;
 import com.composebean.order.dto.OrderItemRequest;
+import com.composebean.order.exception.OrderNotFoundException;
 import com.composebean.order.repository.OrderRepository;
 import com.composebean.product.domain.Product;
+import com.composebean.product.exception.ProductNotFoundException;
 import com.composebean.product.repository.ProductRepository;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -16,11 +20,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.NoSuchElementException;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @SpringBootTest
 @Transactional
@@ -35,8 +37,12 @@ class OrderCreateServiceTest {
     @Autowired
     private OrderRepository orderRepository;
 
+    @Autowired
+    private OrderDetailService orderDetailService;
+
     @Test
-    void 주문을_생성하면_금액을_계산하고_재고를_차감한다() {
+    @DisplayName("주문을 생성하면 금액을 계산하고 재고를 차감한다")
+    void createOrder() {
         Product colombia = saveProduct("Colombia Narino", 5000L, 100);
         Product brazil = saveProduct("Brazil Serra Do Caparao", 6000L, 80);
 
@@ -51,53 +57,67 @@ class OrderCreateServiceTest {
                 deliveryExpectedDate
         );
 
-        assertNotNull(response.getOrderId());
-        assertEquals(16000L, response.getTotalPrice());
-        assertEquals(PaymentStatus.PAID, response.getPaymentStatus());
-        assertEquals(DeliveryStatus.PREPARING, response.getDeliveryStatus());
-        assertEquals(deliveryExpectedDate.toLocalDate(), response.getDeliveryDate());
+        assertThat(response.getOrderId()).isNotNull();
+        assertThat(response.getTotalPrice()).isEqualTo(16000L);
+        assertThat(response.getPaymentStatus()).isEqualTo(PaymentStatus.PAID);
+        assertThat(response.getDeliveryStatus())
+                .isEqualTo(DeliveryStatus.PREPARING);
+        assertThat(response.getDeliveryDate())
+                .isEqualTo(deliveryExpectedDate.toLocalDate());
 
         Order savedOrder = orderRepository.findById(response.getOrderId()).orElseThrow();
-        assertEquals(2, savedOrder.getOrderItems().size());
-        assertEquals(10000L, savedOrder.getOrderItems().get(0).getSubtotal());
-        assertEquals(6000L, savedOrder.getOrderItems().get(1).getSubtotal());
-        assertEquals(98, productRepository.findById(colombia.getId()).orElseThrow().getStockQuantity());
-        assertEquals(79, productRepository.findById(brazil.getId()).orElseThrow().getStockQuantity());
+        assertThat(savedOrder.getOrderItems()).hasSize(2);
+        assertThat(savedOrder.getOrderItems().get(0).getSubtotal())
+                .isEqualTo(10000L);
+        assertThat(savedOrder.getOrderItems().get(1).getSubtotal())
+                .isEqualTo(6000L);
+        assertThat(productRepository.findById(colombia.getId())
+                .orElseThrow()
+                .getStockQuantity()).isEqualTo(98);
+        assertThat(productRepository.findById(brazil.getId())
+                .orElseThrow()
+                .getStockQuantity()).isEqualTo(79);
     }
 
     @Test
-    void 주문_수량이_재고보다_많으면_주문할_수_없다() {
+    @DisplayName("주문 수량이 재고보다 많으면 주문할 수 없다")
+    void createOrderWithInsufficientStock() {
         Product product = saveProduct("Colombia Narino", 5000L, 1);
         OrderCreateRequest request = createRequest(List.of(
                 new OrderItemRequest(product.getId(), 2)
         ));
 
-        IllegalArgumentException exception = assertThrows(
-                IllegalArgumentException.class,
-                () -> orderCreateService.createOrder(request, LocalDateTime.now().plusDays(1))
-        );
+        assertThatThrownBy(() -> orderCreateService.createOrder(
+                request,
+                LocalDateTime.now().plusDays(1)
+        ))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("상품 재고가 부족합니다.");
 
-        assertEquals("상품 재고가 부족합니다.", exception.getMessage());
-        assertEquals(1, productRepository.findById(product.getId()).orElseThrow().getStockQuantity());
+        assertThat(productRepository.findById(product.getId())
+                .orElseThrow()
+                .getStockQuantity()).isEqualTo(1);
     }
 
     @Test
-    void 주문_수량이_0이면_주문할_수_없다() {
+    @DisplayName("주문 수량이 0이면 주문할 수 없다")
+    void createOrderWithZeroQuantity() {
         Product product = saveProduct("Colombia Narino", 5000L, 100);
         OrderCreateRequest request = createRequest(List.of(
                 new OrderItemRequest(product.getId(), 0)
         ));
 
-        IllegalArgumentException exception = assertThrows(
-                IllegalArgumentException.class,
-                () -> orderCreateService.createOrder(request, LocalDateTime.now().plusDays(1))
-        );
-
-        assertEquals("주문 수량은 1개 이상이어야 합니다.", exception.getMessage());
+        assertThatThrownBy(() -> orderCreateService.createOrder(
+                request,
+                LocalDateTime.now().plusDays(1)
+        ))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("주문 수량은 1개 이상이어야 합니다.");
     }
 
     @Test
-    void 이메일_형식이_올바르지_않으면_주문할_수_없다() {
+    @DisplayName("이메일 형식이 올바르지 않으면 주문할 수 없다")
+    void createOrderWithInvalidEmail() {
         Product product = saveProduct("Colombia Narino", 5000L, 100);
         OrderCreateRequest request = new OrderCreateRequest(
                 "wrong-email",
@@ -106,26 +126,64 @@ class OrderCreateServiceTest {
                 List.of(new OrderItemRequest(product.getId(), 1))
         );
 
-        IllegalArgumentException exception = assertThrows(
-                IllegalArgumentException.class,
-                () -> orderCreateService.createOrder(request, LocalDateTime.now().plusDays(1))
-        );
-
-        assertEquals("올바른 이메일을 입력해 주세요.", exception.getMessage());
+        assertThatThrownBy(() -> orderCreateService.createOrder(
+                request,
+                LocalDateTime.now().plusDays(1)
+        ))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("올바른 이메일을 입력해 주세요.");
     }
 
     @Test
-    void 존재하지_않는_상품은_주문할_수_없다() {
+    @DisplayName("존재하지 않는 상품은 주문할 수 없다")
+    void createOrderWithProductNotFound() {
         OrderCreateRequest request = createRequest(List.of(
                 new OrderItemRequest(Long.MAX_VALUE, 1)
         ));
 
-        NoSuchElementException exception = assertThrows(
-                NoSuchElementException.class,
-                () -> orderCreateService.createOrder(request, LocalDateTime.now().plusDays(1))
+        assertThatThrownBy(() -> orderCreateService.createOrder(
+                request,
+                LocalDateTime.now().plusDays(1)
+        ))
+                .isInstanceOf(ProductNotFoundException.class)
+                .hasMessage("상품을 찾을 수 없습니다.");
+    }
+
+    @Test
+    @DisplayName("생성한 주문의 상세 정보와 주문 상품을 조회한다")
+    void getOrderDetail() {
+        Product product = saveProduct("Ethiopia Sidamo", 6500L, 10);
+        OrderCreateRequest request = createRequest(List.of(
+                new OrderItemRequest(product.getId(), 2)
+        ));
+
+        OrderCreateResponse created = orderCreateService.createOrder(
+                request,
+                LocalDateTime.of(2026, 7, 24, 14, 0)
         );
 
-        assertEquals("존재하지 않는 상품입니다.", exception.getMessage());
+        OrderDetailResponse detail = orderDetailService.getOrder(created.getOrderId());
+
+        assertThat(detail.getId()).isEqualTo(created.getOrderId());
+        assertThat(detail.getEmail()).isEqualTo("customer@example.com");
+        assertThat(detail.getTotalPrice()).isEqualTo(13000L);
+        assertThat(detail.getItems()).hasSize(1);
+        assertThat(detail.getItems().get(0).getProductId())
+                .isEqualTo(product.getId());
+        assertThat(detail.getItems().get(0).getProductName())
+                .isEqualTo("Ethiopia Sidamo");
+        assertThat(detail.getItems().get(0).getUnitPrice())
+                .isEqualTo(6500L);
+        assertThat(detail.getItems().get(0).getSubtotal())
+                .isEqualTo(13000L);
+    }
+
+    @Test
+    @DisplayName("존재하지 않는 주문은 상세 조회할 수 없다")
+    void getOrderDetailNotFound() {
+        assertThatThrownBy(() -> orderDetailService.getOrder(Long.MAX_VALUE))
+                .isInstanceOf(OrderNotFoundException.class)
+                .hasMessage("주문을 찾을 수 없습니다.");
     }
 
     private Product saveProduct(String name, Long price, Integer stockQuantity) {
