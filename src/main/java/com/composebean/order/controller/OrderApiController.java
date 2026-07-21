@@ -35,7 +35,7 @@ public class OrderApiController {
     )
     @GetMapping
     public Page<OrderSummaryResponse> getOrders(
-            @RequestParam String email,
+            @RequestParam(required = false) String email,
             @Parameter( description = "조회할 페이지 번호 (1부터 시작)", example = "1" )
             @RequestParam(defaultValue = "1") int page,
             @Parameter( description = "한 페이지에 담을 게시글 수", example = "8" )

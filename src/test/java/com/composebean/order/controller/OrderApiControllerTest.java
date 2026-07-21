@@ -9,6 +9,7 @@ import com.composebean.order.dto.OrderDetailResponse;
 import com.composebean.order.dto.OrderItemResponse;
 import com.composebean.order.repository.OrderRepository;
 import com.composebean.order.service.OrderBatchService;
+import com.composebean.order.service.OrderInquiryService;
 import com.composebean.order.service.OrderUpdateService;
 import com.composebean.product.repository.ProductRepository;
 import org.junit.jupiter.api.DisplayName;
@@ -32,7 +33,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-@WebMvcTest(OrderApiControllerTest.class)
+@WebMvcTest(OrderApiController.class)
 @Import(GlobalExceptionHandler.class)
 class OrderApiControllerTest {
 
@@ -42,10 +43,8 @@ class OrderApiControllerTest {
     @MockitoBean
     private OrderUpdateService orderUpdateService;
 
-    // ObjectMapper : 객체를 JSON으로 변환할 때 쓴다.
-    @Autowired
-    private ObjectMapper objectMapper;
-
+    @MockitoBean
+    private OrderInquiryService orderInquiryService;
 
     @Test
     @DisplayName("배송 상태를 수정하면 200 OK와 수정된 결과를 반환한다")
@@ -74,23 +73,25 @@ class OrderApiControllerTest {
         DeliveryStatusUpdateRequest request = new DeliveryStatusUpdateRequest(DeliveryStatus.DELIVERED);
 
         //목 응답 생성
-        when(orderUpdateService.updateDeliveryStatus(request, 15L))
-                .thenReturn(response);
+        when(orderUpdateService.updateDeliveryStatus(
+                any(DeliveryStatusUpdateRequest.class),
+                eq(15L)
+        )).thenReturn(response);
 
         //가짜 요청 생성
         String requestJson = """
             {
-              "deliveryStatus": "DELIVERED"
+              "deliveryStatus": "SHIPPING"
             }
             """;
 
         //가짜 요청 후 응답 ok받기
         mockMvc.perform(
-                patch("/api/orders/"15L+"/delivery-status")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(requestJson)
-                )
-                .andExpect(status().isOk());
+                patch("/api/orders/{orderId}/delivery-status", 15L)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(requestJson)
+        )
+        .andExpect(status().isOk());
 //        HttpStatus
         verify(orderUpdateService).updateDeliveryStatus(any(DeliveryStatusUpdateRequest.class),eq(15L) );
 
