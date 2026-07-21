@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Compose Bean | 주문</title>
+    <link rel="stylesheet" th:href="@{/css/composebean.css}">
+</head>
+<body>
+<div class="page-shell">
+    <header class="site-header">
+        <a class="header-icon" th:href="@{/}" aria-label="홈">⌂</a>
+        <a class="brand" th:href="@{/}">Composed Bean</a>
+        <a class="header-icon" th:href="@{/orders}" aria-label="주문 조회">▧</a>
+    </header>
+
+    <main class="order-layout">
+        <section class="product-section">
+            <div class="section-heading-row">
+                <h1>상품 목록</h1>
+                <a class="text-link" th:href="@{/admin/products}">상품 관리</a>
+            </div>
+
+            <form class="compact-search" method="get" th:action="@{/order}">
+                <input name="name" type="search" placeholder="상품명으로 검색"
+                       th:value="${searchName}">
+                <button type="submit" class="secondary-button">검색</button>
+            </form>
+
+            <p class="inline-message" th:if="${#lists.isEmpty(products)}">
+                조회된 상품이 없습니다.
+            </p>
+
+            <div class="product-list">
+                <article class="product-row" th:each="product : ${products}">
+                    <div class="product-image">
+                        <img th:if="${product.imageUrl != null and !product.imageUrl.isBlank()}"
+                             th:src="${product.imageUrl}" th:alt="${product.name}">
+                        <span th:unless="${product.imageUrl != null and !product.imageUrl.isBlank()}">이미지</span>
+                    </div>
+                    <div class="product-copy">
+                        <p class="product-description"
+                           th:text="|${product.description == null ? '원두 상품' : product.description} · 재고 ${product.stockQuantity}개|">
+                            상품 설명 · 재고 0개
+                        </p>
+                        <strong th:text="${product.name}">상품명</strong>
+                    </div>
+                    <strong class="product-price"
+                            th:text="|${#numbers.formatInteger(product.price, 0, 'COMMA')}원|">0원</strong>
+                    <button type="button" class="secondary-button add-product-button"
+                            th:disabled="${product.stockQuantity == 0}"
+                            th:attr="data-id=${product.id},data-name=${product.name},data-price=${product.price},data-stock=${product.stockQuantity}">
+                        <span th:text="${product.stockQuantity == 0 ? '품절' : '추가'}">추가</span>
+                    </button>
+                </article>
+            </div>
+        </section>
+
+        <aside class="summary-section">
+            <h2>Summary</h2>
+            <p id="cart-empty" class="empty-state compact">주문할 상품을 추가해 주세요.</p>
+            <div id="cart-list" class="cart-list"></div>
+
+            <form id="order-form" class="order-form" method="post" th:action="@{/order}">
+                <div id="order-item-inputs"></div>
+
+                <label for="email">이메일</label>
+                <input id="email" name="email" type="email" maxlength="100" required>
+
+                <label for="address">주소</label>
+                <input id="address" name="address" type="text" maxlength="255" required>
+
+                <label for="postal-code">우편번호</label>
+                <input id="postal-code" name="postalCode" type="text" maxlength="20" required>
+
+                <p class="delivery-notice">당일 오후 2시 이후 주문은 다음 배송 주기에 처리됩니다.</p>
+
+                <div class="total-row">
+                    <span>총금액</span>
+                    <strong id="order-total">0원</strong>
+                </div>
+
+                <p id="order-message" class="form-message" role="alert"></p>
+                <button id="checkout-button" type="submit" class="primary-button" disabled>결제하기</button>
+            </form>
+        </aside>
+    </main>
+</div>
+
+<script th:src="@{/js/order.js}"></script>
+</body>
+</html>

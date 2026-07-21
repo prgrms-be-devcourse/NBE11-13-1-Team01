@@ -1,6 +1,7 @@
 package com.composebean.order.service;
 
 import com.composebean.order.domain.DeliveryStatus;
+import com.composebean.order.domain.DeliveryAreaDuration;
 import com.composebean.order.domain.Order;
 import com.composebean.order.domain.OrderItem;
 import com.composebean.order.domain.PaymentStatus;
@@ -9,6 +10,7 @@ import com.composebean.order.dto.OrderCreateResponse;
 import com.composebean.order.dto.OrderItemRequest;
 import com.composebean.order.repository.OrderRepository;
 import com.composebean.product.domain.Product;
+import com.composebean.product.exception.ProductNotFoundException;
 import com.composebean.product.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -17,7 +19,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.NoSuchElementException;
 
 @Service
 @RequiredArgsConstructor
@@ -25,6 +26,21 @@ public class OrderCreateService {
 
     private final ProductRepository productRepository;
     private final OrderRepository orderRepository;
+
+    @Transactional
+    public OrderCreateResponse createOrder(OrderCreateRequest request) {
+        if (request == null || request.getAddress() == null) {
+            throw new IllegalArgumentException("주소는 필수입니다.");
+        }
+
+        int deliveryDays = DeliveryAreaDuration.getDeliveryDaysByAddress(
+                request.getAddress()
+        );
+        LocalDateTime deliveryExpectedDate = LocalDateTime.now()
+                .plusDays(deliveryDays);
+
+        return createOrder(request, deliveryExpectedDate);
+    }
 
     @Transactional
     public OrderCreateResponse createOrder(
@@ -38,7 +54,7 @@ public class OrderCreateService {
 
         for (OrderItemRequest itemRequest : request.getItems()) {
             Product product = productRepository.findById(itemRequest.getProductId())
-                    .orElseThrow(() -> new NoSuchElementException("존재하지 않는 상품입니다."));
+                    .orElseThrow(ProductNotFoundException::new);
 
             validateQuantity(itemRequest.getQuantity(), product.getStockQuantity());
 
