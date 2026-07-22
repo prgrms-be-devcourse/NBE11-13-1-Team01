@@ -28,7 +28,7 @@
                 <dt>이메일</dt><dd th:text="${order.email}">customer@example.com</dd>
                 <dt>배송지</dt><dd th:text="${order.address}">서울특별시 강남구 테헤란로 123</dd>
                 <dt>우편번호</dt><dd th:text="${order.postalCode}">06234</dd>
-                <dt>주문 시간</dt><dd th:text="${#temporals.format(order.orderedAt, 'yyyy-MM-dd HH:mm')}">2026-07-16 13:30</dd>
+                <dt>주문 일자</dt><dd th:text="${#temporals.format(order.orderedAt, 'yyyy-MM-dd')}">2026-07-16</dd>
             </dl>
 
             <h2>주문 상품</h2>
@@ -49,7 +49,7 @@
             <div class="delivery-summary">
                 <div>
                     <span>배송 예정일</span>
-                    <strong th:text="${order.deliveryExpectedDate}">2026-07-17</strong>
+                    <strong th:text="${#temporals.format(order.deliveryExpectedDate, 'yyyy-MM-dd')}">2026-07-17</strong>
                 </div>
                 <span class="status-badge"
                       th:text="${order.deliveryStatus.name() == 'PREPARING' ? '배송 대기' : (order.deliveryStatus.name() == 'SHIPPING' ? '배송 중' : '배송 완료')}">

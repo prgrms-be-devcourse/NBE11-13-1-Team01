@@ -20,7 +20,6 @@ document.querySelectorAll(".edit-product-button").forEach(button => {
         document.querySelector("#product-name").value = button.dataset.name;
         document.querySelector("#product-description").value = button.dataset.description || "";
         document.querySelector("#product-price").value = button.dataset.price;
-        document.querySelector("#product-image-url").value = button.dataset.imageUrl || "";
         productStock.value = button.dataset.stock;
 
         productForm.action = `/admin/products/${button.dataset.id}`;
