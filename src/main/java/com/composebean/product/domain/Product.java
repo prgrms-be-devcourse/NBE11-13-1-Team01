@@ -46,6 +46,9 @@ public class Product {
     @Column(nullable = false)
     private LocalDateTime updatedAt;
 
+    @Column
+    private LocalDateTime deletedAt;
+
     @Builder
     public Product(
             String name,
@@ -75,7 +78,9 @@ public class Product {
 
     public void updateStock(Integer stockQuantity) {
         if (stockQuantity == null || stockQuantity < 0) {
-            throw new IllegalArgumentException("재고 수량은 0개 이상이어야 합니다.");
+            throw new IllegalArgumentException(
+                    "재고 수량은 0개 이상이어야 합니다."
+            );
         }
 
         this.stockQuantity = stockQuantity;
@@ -83,14 +88,26 @@ public class Product {
 
     public void decreaseStock(Integer quantity) {
         if (quantity == null || quantity <= 0) {
-            throw new IllegalArgumentException("차감 수량은 1개 이상이어야 합니다.");
+            throw new IllegalArgumentException(
+                    "차감 수량은 1개 이상이어야 합니다."
+            );
         }
 
         if (stockQuantity < quantity) {
-            throw new IllegalArgumentException("재고가 부족합니다.");
+            throw new IllegalArgumentException(
+                    "재고가 부족합니다."
+            );
         }
 
         this.stockQuantity -= quantity;
+    }
+
+    public void delete() {
+        this.deletedAt = LocalDateTime.now();
+    }
+
+    public boolean isDeleted() {
+        return deletedAt != null;
     }
 
     @PrePersist
