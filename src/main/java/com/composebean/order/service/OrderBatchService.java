@@ -1,9 +1,12 @@
 package com.composebean.order.service;
 
+import com.composebean.global.exception.BusinessException;
+import com.composebean.global.exception.ErrorCode;
 import com.composebean.order.domain.*;
 import com.composebean.order.repository.OrderItemRepository;
 import com.composebean.order.repository.OrderRepository;
 import lombok.RequiredArgsConstructor;
+import org.aspectj.weaver.ast.Or;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -43,6 +46,10 @@ public class OrderBatchService {
 
     //그룹을 하나의 데이터로,
     private void processGroup(List<Order> orderList) {
+        if (orderList == null) {
+            return;
+        }
+
         // 1. 대표 주문 선정 (첫 번째 주문을 대표로 사용)
         Order representativeOrder = orderList.get(orderList.size() - 1);
 
@@ -52,10 +59,15 @@ public class OrderBatchService {
 
             //기존 아이템 옮기기
             List<OrderItem> itemsToMove = new ArrayList<>(otherOrder.getOrderItems());
-            for (OrderItem item : itemsToMove) {
-                representativeOrder.addOrderItem(item);
-                otherOrder.removeOrderItem(item); // otherOrder 내부에 정의된 제거 메서드 사용
-                orderItemRepository.delete(item);
+            try {
+
+                for (OrderItem item : itemsToMove) {
+                    representativeOrder.addOrderItem(item);
+                    otherOrder.removeOrderItem(item); // otherOrder 내부에 정의된 제거 메서드 사용
+                    orderItemRepository.delete(item);
+                }
+            } catch (Exception e) {
+                throw new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR);
             }
 
             // 아이템을 옮긴 후, 기존의 껍데기 주문은 삭제 처리
@@ -74,10 +86,10 @@ public class OrderBatchService {
         // deliveryStatus 업데이트
         representativeOrder.updateDeliveryStatus(shipping);
 
-        // deliveryExpectedDate 업데이트
+        /*// deliveryExpectedDate 업데이트 Create 부분에서 이미 수행 중
         LocalDateTime baseDate = representativeOrder.getOrderedAt();
         int days = DeliveryAreaDuration.getDeliveryDaysByAddress(representativeOrder.getAddress());
-        representativeOrder.updateDeliveryExpectedDate(baseDate.plusDays(days));
+        representativeOrder.updateDeliveryExpectedDate(baseDate.plusDays(days));*/
     }
 
 }
