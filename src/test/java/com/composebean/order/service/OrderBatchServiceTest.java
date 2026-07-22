@@ -84,7 +84,7 @@ class OrderBatchServiceTest {
                 .isInstanceOf(BusinessException.class)
                 .satisfies(exception -> {
                     BusinessException ex = (BusinessException) exception;
-                    // 에러 코드가 ORDER_MERGE_FAILED (500) 인지 확인
+                    // 에러 코드가 INTERNAL_SERVER_ERROR (500) 인지 확인
                     assertThat(ex.getErrorCode()).isEqualTo(ErrorCode.INTERNAL_SERVER_ERROR);
                 });
     }
