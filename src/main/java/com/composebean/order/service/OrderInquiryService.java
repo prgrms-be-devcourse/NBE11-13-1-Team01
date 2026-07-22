@@ -21,7 +21,7 @@ public class OrderInquiryService {
 
     @Transactional
     public Page<OrderSummaryResponse> getOrders(String email, Pageable pageable) {
-        List<Order> orders = orderRepository.findAll();
+        List<Order> orders = orderRepository.findAllByDeletedAtIsNull();
         for(Order order : orders) {
             if(order != null && order.getDeliveryExpectedDate().isBefore(LocalDateTime.now()) ) {
                 order.updateDeliveryStatus(DeliveryStatus.DELIVERED);

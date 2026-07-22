@@ -33,7 +33,7 @@ public class OrderBatchService {
         LocalDateTime startDate = now.minusDays(1).withHour(14).withMinute(0).withSecond(0).withNano(0);
         // 오늘 오후 1시 59분 59초
         LocalDateTime endDate = now.withHour(13).withMinute(59).withSecond(59).withNano(0);
-        List<Order> orders = orderRepository.findByOrderedAtBetweenAndPaymentStatus(startDate, endDate, paymentStatus);
+        List<Order> orders = orderRepository.findByOrderedAtBetweenAndPaymentStatus(startDate, endDate, PaymentStatus.PAID);
 
         // 이메일, 주소로 그룹핑
         Map<String, List<Order>> groupedMapOrders = orders.stream()
@@ -52,44 +52,55 @@ public class OrderBatchService {
 
         // 1. 대표 주문 선정 (첫 번째 주문을 대표로 사용)
         Order representativeOrder = orderList.get(orderList.size() - 1);
+        Order newOrder = copyOrder(representativeOrder);
+        representativeOrder.delete();
 
         // 2. 나머지 주문(index 1부터)의 아이템들을 대표 주문으로 이동
         for (int i = 0; i < orderList.size() - 1; i++) {
             Order otherOrder = orderList.get(i);
+            otherOrder.delete();
 
             //기존 아이템 옮기기
             List<OrderItem> itemsToMove = new ArrayList<>(otherOrder.getOrderItems());
             try {
 
                 for (OrderItem item : itemsToMove) {
-                    representativeOrder.addOrderItem(item);
-                    otherOrder.removeOrderItem(item); // otherOrder 내부에 정의된 제거 메서드 사용
-                    orderItemRepository.delete(item);
+                    newOrder.addOrderItem(item);
                 }
             } catch (Exception e) {
                 throw new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR);
             }
 
-            // 아이템을 옮긴 후, 기존의 껍데기 주문은 삭제 처리
-            orderRepository.delete(otherOrder);
         }
 
         // 3. totalPrice 재계산
-        long newTotal = representativeOrder.getOrderItems().stream()
+        long newTotal = newOrder.getOrderItems().stream()
                 .mapToLong(OrderItem::getSubtotal)
                 .sum();
-        representativeOrder.updateTotalPrice(newTotal);
+        newOrder.updateTotalPrice(newTotal);
 
         // paymentStatus 업데이트
-        representativeOrder.updatePaymentStatus(paymentStatus);
+        newOrder.updatePaymentStatus(paymentStatus);
 
         // deliveryStatus 업데이트
-        representativeOrder.updateDeliveryStatus(shipping);
+        newOrder.updateDeliveryStatus(shipping);
 
-        /*// deliveryExpectedDate 업데이트 Create 부분에서 이미 수행 중
-        LocalDateTime baseDate = representativeOrder.getOrderedAt();
-        int days = DeliveryAreaDuration.getDeliveryDaysByAddress(representativeOrder.getAddress());
-        representativeOrder.updateDeliveryExpectedDate(baseDate.plusDays(days));*/
+        //새로운 주문 처리
+        orderRepository.save(newOrder);
+    }
+
+    public Order copyOrder(Order original) {
+        // 외부에서 빌더로 복사본 생성 (id는 제외됨)
+        return Order.builder()
+                .email(original.getEmail())
+                .address(original.getAddress())
+                .postalCode(original.getPostalCode())
+                .totalPrice(original.getTotalPrice())
+                .paymentStatus(original.getPaymentStatus())
+                .deliveryStatus(original.getDeliveryStatus())
+                .deliveryExpectedDate(original.getDeliveryExpectedDate())
+                .orderedAt(original.getOrderedAt()) // 복사된 시점 혹은 original.getOrderedAt()
+                .build();
     }
 
 }

@@ -58,6 +58,9 @@ public class Order {
     @Column(nullable = false, updatable = false)
     private LocalDateTime orderedAt;
 
+    @Column
+    private LocalDateTime deletedAt;
+
     @OneToMany(
             mappedBy = "order",
             cascade = CascadeType.ALL
@@ -135,6 +138,10 @@ public class Order {
 
     public void updateDeliveryExpectedDate(LocalDateTime deliveryExpectedDate) {
         this.deliveryExpectedDate = deliveryExpectedDate;
+    }
+
+    public void delete() {
+        this.deletedAt = LocalDateTime.now();
     }
 
 }
