@@ -28,9 +28,15 @@ public class ProductService {
         List<Product> products;
 
         if (name == null || name.isBlank()) {
-            products = productRepository.findAll();
+            products =
+                    productRepository
+                            .findAllByDeletedAtIsNull();
         } else {
-            products = productRepository.findByNameContainingIgnoreCase(name);
+            products =
+                    productRepository
+                            .findByNameContainingIgnoreCaseAndDeletedAtIsNull(
+                                    name
+                            );
         }
 
         return ProductListResponse.from(products);
@@ -43,11 +49,15 @@ public class ProductService {
     }
 
     @Transactional
-    public ProductResponse createProduct(ProductCreateRequest request) {
-        String imageUrl = saveImage(request.getImageFile());
+    public ProductResponse createProduct(
+            ProductCreateRequest request
+    ) {
+        String imageUrl =
+                saveImage(request.getImageFile());
 
         Product product = request.toEntity(imageUrl);
-        Product savedProduct = productRepository.save(product);
+        Product savedProduct =
+                productRepository.save(product);
 
         return ProductResponse.from(savedProduct);
     }
@@ -88,7 +98,9 @@ public class ProductService {
     ) {
         Product product = findProduct(productId);
 
-        product.updateStock(request.getStockQuantity());
+        product.updateStock(
+                request.getStockQuantity()
+        );
 
         productRepository.flush();
 
@@ -99,10 +111,12 @@ public class ProductService {
     public void deleteProduct(Long productId) {
         Product product = findProduct(productId);
 
-        productRepository.delete(product);
+        product.delete();
     }
 
-    private String saveImage(MultipartFile imageFile) {
+    private String saveImage(
+            MultipartFile imageFile
+    ) {
         if (!hasImage(imageFile)) {
             return null;
         }
@@ -110,12 +124,18 @@ public class ProductService {
         return imageStorageService.store(imageFile);
     }
 
-    private boolean hasImage(MultipartFile imageFile) {
-        return imageFile != null && !imageFile.isEmpty();
+    private boolean hasImage(
+            MultipartFile imageFile
+    ) {
+        return imageFile != null
+                && !imageFile.isEmpty();
     }
 
     private Product findProduct(Long productId) {
-        return productRepository.findById(productId)
-                .orElseThrow(ProductNotFoundException::new);
+        return productRepository
+                .findByIdAndDeletedAtIsNull(productId)
+                .orElseThrow(
+                        ProductNotFoundException::new
+                );
     }
 }

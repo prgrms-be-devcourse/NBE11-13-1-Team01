@@ -66,204 +66,279 @@ class ProductServiceTest {
         when(productRepository.save(any(Product.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
 
-        ProductResponse response = productService.createProduct(request);
+        ProductResponse response =
+                productService.createProduct(request);
 
-        assertThat(response.getName()).isEqualTo("콜롬비아 원두");
-        assertThat(response.getPrice()).isEqualTo(18000L);
+        assertThat(response.getName())
+                .isEqualTo("콜롬비아 원두");
+        assertThat(response.getPrice())
+                .isEqualTo(18000L);
         assertThat(response.getDescription())
                 .isEqualTo("산미와 단맛이 균형 잡힌 원두");
         assertThat(response.getImageUrl()).isNull();
-        assertThat(response.getStockQuantity()).isEqualTo(100);
+        assertThat(response.getStockQuantity())
+                .isEqualTo(100);
 
-        verify(productRepository).save(any(Product.class));
-        verify(imageStorageService, never()).store(any());
+        verify(productRepository)
+                .save(any(Product.class));
+        verify(imageStorageService, never())
+                .store(any());
     }
 
     @Test
     @DisplayName("이미지를 포함하여 상품을 등록한다")
     void createProductWithImage() {
-        MockMultipartFile imageFile = new MockMultipartFile(
-                "imageFile",
-                "colombia-beans.jpg",
-                "image/jpeg",
-                "image-content".getBytes()
-        );
+        MockMultipartFile imageFile =
+                new MockMultipartFile(
+                        "imageFile",
+                        "colombia-beans.jpg",
+                        "image/jpeg",
+                        "image-content".getBytes()
+                );
 
-        ProductCreateRequest request = ProductCreateRequest.builder()
-                .name("콜롬비아 원두")
-                .price(18000L)
-                .description("산미와 단맛이 균형 잡힌 원두")
-                .imageFile(imageFile)
-                .stockQuantity(100)
-                .build();
+        ProductCreateRequest request =
+                ProductCreateRequest.builder()
+                        .name("콜롬비아 원두")
+                        .price(18000L)
+                        .description("산미와 단맛이 균형 잡힌 원두")
+                        .imageFile(imageFile)
+                        .stockQuantity(100)
+                        .build();
 
         when(imageStorageService.store(imageFile))
-                .thenReturn("/uploads/products/stored-image.jpg");
+                .thenReturn(
+                        "/uploads/products/stored-image.jpg"
+                );
 
         when(productRepository.save(any(Product.class)))
-                .thenAnswer(invocation -> invocation.getArgument(0));
+                .thenAnswer(
+                        invocation -> invocation.getArgument(0)
+                );
 
-        ProductResponse response = productService.createProduct(request);
+        ProductResponse response =
+                productService.createProduct(request);
 
         assertThat(response.getImageUrl())
-                .isEqualTo("/uploads/products/stored-image.jpg");
+                .isEqualTo(
+                        "/uploads/products/stored-image.jpg"
+                );
 
         verify(imageStorageService).store(imageFile);
-        verify(productRepository).save(any(Product.class));
+        verify(productRepository)
+                .save(any(Product.class));
     }
 
     @Test
-    @DisplayName("검색어가 없으면 전체 상품을 조회한다")
+    @DisplayName("검색어가 없으면 삭제되지 않은 상품을 조회한다")
     void getProductsWithoutName() {
-        when(productRepository.findAll())
+        when(productRepository.findAllByDeletedAtIsNull())
                 .thenReturn(List.of(product));
 
-        ProductListResponse response = productService.getProducts(null);
+        ProductListResponse response =
+                productService.getProducts(null);
 
         assertThat(response.getProducts()).hasSize(1);
         assertThat(response.getProducts().get(0).getName())
                 .isEqualTo("콜롬비아 원두");
 
-        verify(productRepository).findAll();
+        verify(productRepository)
+                .findAllByDeletedAtIsNull();
         verify(productRepository, never())
-                .findByNameContainingIgnoreCase(any());
+                .findByNameContainingIgnoreCaseAndDeletedAtIsNull(
+                        any()
+                );
     }
 
     @Test
-    @DisplayName("검색어가 공백이면 전체 상품을 조회한다")
+    @DisplayName("검색어가 공백이면 삭제되지 않은 상품을 조회한다")
     void getProductsWithBlankName() {
-        when(productRepository.findAll())
+        when(productRepository.findAllByDeletedAtIsNull())
                 .thenReturn(List.of(product));
 
-        ProductListResponse response = productService.getProducts("   ");
+        ProductListResponse response =
+                productService.getProducts("   ");
 
         assertThat(response.getProducts()).hasSize(1);
 
-        verify(productRepository).findAll();
+        verify(productRepository)
+                .findAllByDeletedAtIsNull();
         verify(productRepository, never())
-                .findByNameContainingIgnoreCase(any());
+                .findByNameContainingIgnoreCaseAndDeletedAtIsNull(
+                        any()
+                );
     }
 
     @Test
-    @DisplayName("상품명에 검색어가 포함된 상품을 조회한다")
+    @DisplayName("상품명에 검색어가 포함된 삭제되지 않은 상품을 조회한다")
     void getProductsWithName() {
-        when(productRepository.findByNameContainingIgnoreCase("원두"))
-                .thenReturn(List.of(product));
+        when(
+                productRepository
+                        .findByNameContainingIgnoreCaseAndDeletedAtIsNull(
+                                "원두"
+                        )
+        ).thenReturn(List.of(product));
 
-        ProductListResponse response = productService.getProducts("원두");
+        ProductListResponse response =
+                productService.getProducts("원두");
 
         assertThat(response.getProducts()).hasSize(1);
         assertThat(response.getProducts().get(0).getName())
                 .contains("원두");
 
         verify(productRepository)
-                .findByNameContainingIgnoreCase("원두");
-        verify(productRepository, never()).findAll();
+                .findByNameContainingIgnoreCaseAndDeletedAtIsNull(
+                        "원두"
+                );
+        verify(productRepository, never())
+                .findAllByDeletedAtIsNull();
     }
 
     @Test
-    @DisplayName("상품 ID로 상품을 조회한다")
+    @DisplayName("상품 ID로 삭제되지 않은 상품을 조회한다")
     void getProduct() {
-        when(productRepository.findById(1L))
-                .thenReturn(Optional.of(product));
+        when(
+                productRepository
+                        .findByIdAndDeletedAtIsNull(1L)
+        ).thenReturn(Optional.of(product));
 
-        ProductResponse response = productService.getProduct(1L);
+        ProductResponse response =
+                productService.getProduct(1L);
 
-        assertThat(response.getName()).isEqualTo("콜롬비아 원두");
-        assertThat(response.getPrice()).isEqualTo(18000L);
+        assertThat(response.getName())
+                .isEqualTo("콜롬비아 원두");
+        assertThat(response.getPrice())
+                .isEqualTo(18000L);
 
-        verify(productRepository).findById(1L);
+        verify(productRepository)
+                .findByIdAndDeletedAtIsNull(1L);
     }
 
     @Test
-    @DisplayName("존재하지 않는 상품을 조회하면 예외가 발생한다")
+    @DisplayName("존재하지 않거나 삭제된 상품을 조회하면 예외가 발생한다")
     void getProductNotFound() {
-        when(productRepository.findById(999L))
-                .thenReturn(Optional.empty());
+        when(
+                productRepository
+                        .findByIdAndDeletedAtIsNull(999L)
+        ).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> productService.getProduct(999L))
-                .isInstanceOf(ProductNotFoundException.class);
+        assertThatThrownBy(
+                () -> productService.getProduct(999L)
+        ).isInstanceOf(ProductNotFoundException.class);
 
-        verify(productRepository).findById(999L);
+        verify(productRepository)
+                .findByIdAndDeletedAtIsNull(999L);
     }
 
     @Test
     @DisplayName("이미지 없이 상품 정보를 수정하면 기존 이미지를 유지한다")
     void updateProductWithoutImage() {
-        ProductUpdateRequest request = ProductUpdateRequest.builder()
-                .name("에티오피아 원두")
-                .price(20000L)
-                .description("꽃향과 산미가 특징인 원두")
-                .build();
+        ProductUpdateRequest request =
+                ProductUpdateRequest.builder()
+                        .name("에티오피아 원두")
+                        .price(20000L)
+                        .description(
+                                "꽃향과 산미가 특징인 원두"
+                        )
+                        .build();
 
-        when(productRepository.findById(1L))
-                .thenReturn(Optional.of(product));
+        when(
+                productRepository
+                        .findByIdAndDeletedAtIsNull(1L)
+        ).thenReturn(Optional.of(product));
 
-        ProductResponse response = productService.updateProduct(1L, request);
+        ProductResponse response =
+                productService.updateProduct(1L, request);
 
-        assertThat(response.getName()).isEqualTo("에티오피아 원두");
-        assertThat(response.getPrice()).isEqualTo(20000L);
+        assertThat(response.getName())
+                .isEqualTo("에티오피아 원두");
+        assertThat(response.getPrice())
+                .isEqualTo(20000L);
         assertThat(response.getDescription())
                 .isEqualTo("꽃향과 산미가 특징인 원두");
         assertThat(response.getImageUrl())
-                .isEqualTo("/images/products/colombia-beans.jpg");
-        assertThat(response.getStockQuantity()).isEqualTo(100);
+                .isEqualTo(
+                        "/images/products/colombia-beans.jpg"
+                );
+        assertThat(response.getStockQuantity())
+                .isEqualTo(100);
 
-        verify(imageStorageService, never()).store(any());
-        verify(productRepository).findById(1L);
+        verify(imageStorageService, never())
+                .store(any());
+        verify(productRepository)
+                .findByIdAndDeletedAtIsNull(1L);
         verify(productRepository).flush();
     }
 
     @Test
     @DisplayName("새 이미지로 상품 정보를 수정한다")
     void updateProductWithImage() {
-        MockMultipartFile imageFile = new MockMultipartFile(
-                "imageFile",
-                "ethiopia-beans.jpg",
-                "image/jpeg",
-                "new-image-content".getBytes()
-        );
+        MockMultipartFile imageFile =
+                new MockMultipartFile(
+                        "imageFile",
+                        "ethiopia-beans.jpg",
+                        "image/jpeg",
+                        "new-image-content".getBytes()
+                );
 
-        ProductUpdateRequest request = ProductUpdateRequest.builder()
-                .name("에티오피아 원두")
-                .price(20000L)
-                .description("꽃향과 산미가 특징인 원두")
-                .imageFile(imageFile)
-                .build();
+        ProductUpdateRequest request =
+                ProductUpdateRequest.builder()
+                        .name("에티오피아 원두")
+                        .price(20000L)
+                        .description(
+                                "꽃향과 산미가 특징인 원두"
+                        )
+                        .imageFile(imageFile)
+                        .build();
 
-        when(productRepository.findById(1L))
-                .thenReturn(Optional.of(product));
+        when(
+                productRepository
+                        .findByIdAndDeletedAtIsNull(1L)
+        ).thenReturn(Optional.of(product));
 
         when(imageStorageService.store(imageFile))
-                .thenReturn("/uploads/products/ethiopia-beans.jpg");
+                .thenReturn(
+                        "/uploads/products/ethiopia-beans.jpg"
+                );
 
-        ProductResponse response = productService.updateProduct(1L, request);
+        ProductResponse response =
+                productService.updateProduct(1L, request);
 
         assertThat(response.getImageUrl())
-                .isEqualTo("/uploads/products/ethiopia-beans.jpg");
+                .isEqualTo(
+                        "/uploads/products/ethiopia-beans.jpg"
+                );
 
         verify(imageStorageService).store(imageFile);
         verify(productRepository).flush();
     }
 
     @Test
-    @DisplayName("존재하지 않는 상품의 정보를 수정하면 예외가 발생한다")
+    @DisplayName("존재하지 않거나 삭제된 상품은 수정할 수 없다")
     void updateProductNotFound() {
-        ProductUpdateRequest request = ProductUpdateRequest.builder()
-                .name("에티오피아 원두")
-                .price(20000L)
-                .description("꽃향과 산미가 특징인 원두")
-                .build();
+        ProductUpdateRequest request =
+                ProductUpdateRequest.builder()
+                        .name("에티오피아 원두")
+                        .price(20000L)
+                        .description(
+                                "꽃향과 산미가 특징인 원두"
+                        )
+                        .build();
 
-        when(productRepository.findById(999L))
-                .thenReturn(Optional.empty());
+        when(
+                productRepository
+                        .findByIdAndDeletedAtIsNull(999L)
+        ).thenReturn(Optional.empty());
 
         assertThatThrownBy(
-                () -> productService.updateProduct(999L, request)
+                () -> productService.updateProduct(
+                        999L,
+                        request
+                )
         ).isInstanceOf(ProductNotFoundException.class);
 
         verify(productRepository, never()).flush();
-        verify(imageStorageService, never()).store(any());
+        verify(imageStorageService, never())
+                .store(any());
     }
 
     @Test
@@ -274,59 +349,82 @@ class ProductServiceTest {
                         .stockQuantity(75)
                         .build();
 
-        when(productRepository.findById(1L))
-                .thenReturn(Optional.of(product));
+        when(
+                productRepository
+                        .findByIdAndDeletedAtIsNull(1L)
+        ).thenReturn(Optional.of(product));
 
-        ProductResponse response = productService.updateStock(1L, request);
+        ProductResponse response =
+                productService.updateStock(1L, request);
 
-        assertThat(response.getStockQuantity()).isEqualTo(75);
-        assertThat(response.getName()).isEqualTo("콜롬비아 원두");
-        assertThat(response.getPrice()).isEqualTo(18000L);
+        assertThat(response.getStockQuantity())
+                .isEqualTo(75);
+        assertThat(response.getName())
+                .isEqualTo("콜롬비아 원두");
+        assertThat(response.getPrice())
+                .isEqualTo(18000L);
 
-        verify(productRepository).findById(1L);
+        verify(productRepository)
+                .findByIdAndDeletedAtIsNull(1L);
         verify(productRepository).flush();
     }
 
     @Test
-    @DisplayName("존재하지 않는 상품의 재고를 수정하면 예외가 발생한다")
+    @DisplayName("존재하지 않거나 삭제된 상품의 재고는 수정할 수 없다")
     void updateStockNotFound() {
         ProductStockUpdateRequest request =
                 ProductStockUpdateRequest.builder()
                         .stockQuantity(75)
                         .build();
 
-        when(productRepository.findById(999L))
-                .thenReturn(Optional.empty());
+        when(
+                productRepository
+                        .findByIdAndDeletedAtIsNull(999L)
+        ).thenReturn(Optional.empty());
 
         assertThatThrownBy(
-                () -> productService.updateStock(999L, request)
+                () -> productService.updateStock(
+                        999L,
+                        request
+                )
         ).isInstanceOf(ProductNotFoundException.class);
 
         verify(productRepository, never()).flush();
     }
 
     @Test
-    @DisplayName("상품을 삭제한다")
+    @DisplayName("상품 삭제 시 삭제 시각을 기록한다")
     void deleteProduct() {
-        when(productRepository.findById(1L))
-                .thenReturn(Optional.of(product));
+        when(
+                productRepository
+                        .findByIdAndDeletedAtIsNull(1L)
+        ).thenReturn(Optional.of(product));
 
         productService.deleteProduct(1L);
 
-        verify(productRepository).findById(1L);
-        verify(productRepository).delete(product);
+        assertThat(product.getDeletedAt()).isNotNull();
+        assertThat(product.isDeleted()).isTrue();
+
+        verify(productRepository)
+                .findByIdAndDeletedAtIsNull(1L);
+        verify(productRepository, never())
+                .delete(any(Product.class));
     }
 
     @Test
-    @DisplayName("존재하지 않는 상품을 삭제하면 예외가 발생한다")
+    @DisplayName("존재하지 않거나 이미 삭제된 상품을 삭제하면 예외가 발생한다")
     void deleteProductNotFound() {
-        when(productRepository.findById(999L))
-                .thenReturn(Optional.empty());
+        when(
+                productRepository
+                        .findByIdAndDeletedAtIsNull(999L)
+        ).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> productService.deleteProduct(999L))
-                .isInstanceOf(ProductNotFoundException.class);
+        assertThatThrownBy(
+                () -> productService.deleteProduct(999L)
+        ).isInstanceOf(ProductNotFoundException.class);
 
-        verify(productRepository).findById(999L);
+        verify(productRepository)
+                .findByIdAndDeletedAtIsNull(999L);
         verify(productRepository, never())
                 .delete(any(Product.class));
     }
