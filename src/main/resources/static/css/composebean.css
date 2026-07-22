@@ -94,6 +94,21 @@ textarea { min-height: 90px; resize: vertical; }
     border-radius: 11px;
     background: var(--white);
 }
+.delivery-region-select:disabled {
+    background: var(--white);
+    color: #111;
+    opacity: 1;
+    -webkit-text-fill-color: #111;
+    appearance: none;
+    -webkit-appearance: none;
+    cursor: default;
+}
+.address-search-row {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 8px;
+}
+.address-search-row .secondary-button { min-width: 92px; }
 
 .primary-button, .dark-button, .secondary-button {
     border: 0;
