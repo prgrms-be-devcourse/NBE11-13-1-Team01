@@ -94,6 +94,21 @@ textarea { min-height: 90px; resize: vertical; }
     border-radius: 11px;
     background: var(--white);
 }
+.delivery-region-select:disabled {
+    background: var(--white);
+    color: #111;
+    opacity: 1;
+    -webkit-text-fill-color: #111;
+    appearance: none;
+    -webkit-appearance: none;
+    cursor: default;
+}
+.address-search-row {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 8px;
+}
+.address-search-row .secondary-button { min-width: 92px; }
 
 .primary-button, .dark-button, .secondary-button {
     border: 0;
@@ -180,6 +195,7 @@ button:disabled { cursor: not-allowed; opacity: .45; }
 .receipt-info dd { margin: 0; }
 .receipt-card h2 { margin-top: 28px; }
 .receipt-item { display: grid; grid-template-columns: 1fr 60px 100px 100px; gap: 10px; padding: 14px 0; border-bottom: 1px solid var(--line); text-align: right; }
+.receipt-item:last-child { border-bottom: 0; }
 .receipt-item > :first-child { text-align: left; }
 .receipt-total-row { margin-top: 14px; }
 .delivery-summary { margin-top: 18px; padding-top: 18px; }
@@ -187,10 +203,18 @@ button:disabled { cursor: not-allowed; opacity: .45; }
 
 .order-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 18px; }
 .order-card { display: block; padding: 22px; border-radius: 17px; background: var(--panel); }
+.order-card-link { display: block; }
 .order-card time { display: block; margin: 8px 0 22px; color: var(--muted); }
 .order-card dl { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .order-card dt { color: var(--muted); }
 .order-card dd { margin: 0; text-align: right; }
+.delivery-status-select {
+    width: auto;
+    border: 0;
+    outline: 0;
+    cursor: pointer;
+}
+.delivery-status-select:disabled { cursor: wait; opacity: .6; }
 
 .admin-layout { grid-template-columns: 65% 35%; }
 .admin-form-section { background: #f0f0f2; border-left: 1px solid var(--line); }

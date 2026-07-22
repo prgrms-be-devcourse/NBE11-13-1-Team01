@@ -3,19 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Compose Bean | 주문 조회</title>
+    <title th:text="${adminMode} ? 'Compose Bean | 주문 관리' : 'Compose Bean | 주문 조회'">Compose Bean | 주문 조회</title>
     <link rel="stylesheet" th:href="@{/css/composebean.css}">
 </head>
 <body>
 <div class="page-shell order-list-page">
     <header class="site-header">
         <a class="header-icon" th:href="@{/}" aria-label="홈">⌂</a>
-        <h1 class="page-title">주문 조회</h1>
-        <a class="header-icon" th:href="@{/admin/products}" aria-label="상품 관리">▧</a>
+        <h1 class="page-title" th:text="${adminMode} ? '주문 관리' : '주문 조회'">주문 조회</h1>
+        <a class="header-icon" th:href="@{/orders}" aria-label="주문 조회">▧</a>
     </header>
 
     <main>
-        <form class="wide-search" method="get" th:action="@{/orders}">
+        <form class="wide-search" method="get"
+              th:action="${adminMode} ? @{/admin/orders} : @{/orders}">
             <input name="email" type="email" placeholder="이메일로 내 주문 찾기" th:value="${email}">
             <button type="submit" class="dark-button">⌕ 검색</button>
         </form>
@@ -25,21 +26,39 @@
         </p>
 
         <section class="order-grid">
-            <a class="order-card" th:each="order : ${orders}" th:href="@{/receipt/{id}(id=${order.id})}">
+            <article class="order-card" th:each="order : ${orders}">
                 <div class="order-card-title">
-                    <strong th:text="|주문 #${order.id}|">주문 #15</strong>
-                    <span class="status-badge" th:text="${order.deliveryStatus}">배송 중</span>
+                    <a th:href="@{/receipt/{id}(id=${order.id})}">
+                        <strong th:text="|주문 #${order.id}|">주문 #15</strong>
+                    </a>
+
+                    <select class="status-badge delivery-status-select"
+                            th:if="${adminMode}"
+                            th:attr="data-order-id=${order.id},aria-label=|주문 ${order.id} 배송 상태 변경|">
+                        <option value="PREPARING" th:selected="${order.deliveryStatus.name() == 'PREPARING'}">배송 준비</option>
+                        <option value="SHIPPING" th:selected="${order.deliveryStatus.name() == 'SHIPPING'}">배송 중</option>
+                        <option value="DELIVERED" th:selected="${order.deliveryStatus.name() == 'DELIVERED'}">배송 완료</option>
+                    </select>
+
+                    <span class="status-badge" th:unless="${adminMode}"
+                          th:text="${order.deliveryStatus.name() == 'PREPARING' ? '배송 준비' : (order.deliveryStatus.name() == 'SHIPPING' ? '배송 중' : '배송 완료')}">
+                        배송 중
+                    </span>
                 </div>
-                <time th:text="${#temporals.format(order.orderedAt, 'yyyy-MM-dd')}">2026-07-16</time>
-                <dl>
-                    <dt>주문자</dt><dd th:text="${order.email}">customer@example.com</dd>
-                    <dt>배송 예정일</dt><dd th:text="${#temporals.format(order.deliveryExpectedDate, 'yyyy-MM-dd')}">2026-07-17</dd>
-                    <dt>결제 상태</dt><dd th:text="${order.paymentStatus}">완료</dd>
-                    <dt>총금액</dt><dd th:text="|${#numbers.formatInteger(order.totalPrice, 0, 'COMMA')}원|">0원</dd>
-                </dl>
-            </a>
+
+                <a class="order-card-link" th:href="@{/receipt/{id}(id=${order.id})}">
+                    <time th:text="${#temporals.format(order.orderedAt, 'yyyy-MM-dd')}">2026-07-16</time>
+                    <dl>
+                        <dt>주문자</dt><dd th:text="${order.email}">customer@example.com</dd>
+                        <dt>배송 예정일</dt><dd th:text="${#temporals.format(order.deliveryExpectedDate, 'yyyy-MM-dd')}">2026-07-17</dd>
+                        <dt>결제 상태</dt><dd th:text="${order.paymentStatus}">완료</dd>
+                        <dt>총금액</dt><dd th:text="|${#numbers.formatInteger(order.totalPrice, 0, 'COMMA')}원|">0원</dd>
+                    </dl>
+                </a>
+            </article>
         </section>
     </main>
 </div>
+<script th:if="${adminMode}" th:src="@{/js/order-admin.js}"></script>
 </body>
 </html>

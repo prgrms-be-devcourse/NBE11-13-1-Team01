@@ -52,8 +52,8 @@
                     <strong th:text="${#temporals.format(order.deliveryExpectedDate, 'yyyy-MM-dd')}">2026-07-17</strong>
                 </div>
                 <span class="status-badge"
-                      th:text="${order.deliveryStatus.name() == 'PREPARING' ? '배송 대기' : (order.deliveryStatus.name() == 'SHIPPING' ? '배송 중' : '배송 완료')}">
-                    배송 대기
+                      th:text="${order.deliveryStatus.name() == 'PREPARING' ? '배송 준비' : (order.deliveryStatus.name() == 'SHIPPING' ? '배송 중' : '배송 완료')}">
+                    배송 준비
                 </span>
             </div>
         </article>

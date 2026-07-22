@@ -74,6 +74,25 @@ public class PageController {
             Model model
     ) {
         model.addAttribute("email", email);
+        model.addAttribute("adminMode", false);
+
+        Pageable pageable = PageRequest.of(0, 1000);
+
+        model.addAttribute(
+                "orders",
+                orderInquiryService.getOrders(email, pageable)
+        );
+
+        return "order-list";
+    }
+
+    @GetMapping("/admin/orders")
+    public String orderAdminPage(
+            @RequestParam(required = false) String email,
+            Model model
+    ) {
+        model.addAttribute("email", email);
+        model.addAttribute("adminMode", true);
 
         Pageable pageable = PageRequest.of(0, 1000);
 
