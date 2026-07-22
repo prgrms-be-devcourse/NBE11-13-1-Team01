@@ -33,7 +33,7 @@ public class OrderBatchService {
         LocalDateTime startDate = now.minusDays(1).withHour(14).withMinute(0).withSecond(0).withNano(0);
         // 오늘 오후 1시 59분 59초
         LocalDateTime endDate = now.withHour(13).withMinute(59).withSecond(59).withNano(0);
-        List<Order> orders = orderRepository.findByOrderedAtBetweenAndPaymentStatus(startDate, endDate, PaymentStatus.PENDING);
+        List<Order> orders = orderRepository.findByOrderedAtBetweenAndPaymentStatus(startDate, endDate, paymentStatus);
 
         // 이메일, 주소로 그룹핑
         Map<String, List<Order>> groupedMapOrders = orders.stream()
