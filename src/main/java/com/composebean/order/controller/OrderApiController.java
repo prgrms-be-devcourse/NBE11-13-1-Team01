@@ -13,13 +13,18 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+@Validated
 @Tag(name = "주문 API", description = "주문 검색 및 주문 세부 배송 상태 변경")
 @RestController
 @RequiredArgsConstructor
@@ -36,10 +41,24 @@ public class OrderApiController {
     @GetMapping
     public Page<OrderSummaryResponse> getOrders(
             @RequestParam(required = false) String email,
-            @Parameter( description = "조회할 페이지 번호 (1부터 시작)", example = "1" )
-            @RequestParam(defaultValue = "1") int page,
-            @Parameter( description = "한 페이지에 담을 게시글 수", example = "8" )
-            @RequestParam(defaultValue = "8") int size                           ) {
+
+            @Parameter(
+                    description = "조회할 페이지 번호 (1부터 시작)",
+                    example = "1"
+            )
+            @RequestParam(defaultValue = "1")
+            @Min(value = 1, message = "페이지 번호는 1 이상이어야 합니다.")
+            int page,
+
+            @Parameter(
+                    description = "한 페이지에 담을 주문 수",
+                    example = "8"
+            )
+            @RequestParam(defaultValue = "8")
+            @Min(value = 1, message = "페이지 크기는 1 이상이어야 합니다.")
+            @Max(value = 100, message = "페이지 크기는 100 이하여야 합니다.")
+            int size
+    ) {
         Pageable pageable = PageRequest.of(page - 1, size);
 
         return orderInquiryService.getOrders(email, pageable);
@@ -65,7 +84,10 @@ public class OrderApiController {
     @PatchMapping("/{orderId}/delivery-status")
     public ResponseEntity<OrderDetailResponse> updateDeliveryStatus(
             @Valid @RequestBody DeliveryStatusUpdateRequest dto,
-            @PathVariable Long orderId) {
+            @PathVariable
+            @Positive(message = "주문 ID는 양수여야 합니다.")
+            Long orderId
+    ) {
         return ResponseEntity.ok(orderUpdateService.updateDeliveryStatus(dto, orderId));
     }
 }

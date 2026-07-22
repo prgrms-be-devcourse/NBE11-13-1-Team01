@@ -1,5 +1,6 @@
 package com.composebean.global.exception;
 
+import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -7,6 +8,7 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.HandlerMethodValidationException;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -44,6 +46,56 @@ public class GlobalExceptionHandler {
                     fieldError.getDefaultMessage()
             );
         }
+
+        ErrorResponse response = ErrorResponse.of(
+                ErrorCode.INVALID_REQUEST,
+                errors
+        );
+
+        return ResponseEntity
+                .status(ErrorCode.INVALID_REQUEST.getStatus())
+                .body(response);
+    }
+
+    @ExceptionHandler(HandlerMethodValidationException.class)
+    public ResponseEntity<ErrorResponse> handleHandlerMethodValidationException(
+            HandlerMethodValidationException exception
+    ) {
+        Map<String, String> errors = new LinkedHashMap<>();
+
+        exception.getParameterValidationResults().forEach(result -> {
+            String field = result.getMethodParameter().getParameterName();
+
+            result.getResolvableErrors().forEach(error ->
+                    errors.putIfAbsent(
+                            field != null ? field : "parameter",
+                            error.getDefaultMessage()
+                    )
+            );
+        });
+
+        ErrorResponse response = ErrorResponse.of(
+                ErrorCode.INVALID_REQUEST,
+                errors
+        );
+
+        return ResponseEntity
+                .status(ErrorCode.INVALID_REQUEST.getStatus())
+                .body(response);
+    }
+
+    @ExceptionHandler(ConstraintViolationException.class)
+    public ResponseEntity<ErrorResponse> handleConstraintViolationException(
+            ConstraintViolationException exception
+    ) {
+        Map<String, String> errors = new LinkedHashMap<>();
+
+        exception.getConstraintViolations().forEach(violation -> {
+            String path = violation.getPropertyPath().toString();
+            String field = path.substring(path.lastIndexOf('.') + 1);
+
+            errors.putIfAbsent(field, violation.getMessage());
+        });
 
         ErrorResponse response = ErrorResponse.of(
                 ErrorCode.INVALID_REQUEST,

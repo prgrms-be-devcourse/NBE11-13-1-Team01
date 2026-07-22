@@ -1,8 +1,11 @@
 package com.composebean.order.exception;
 
-public class OrderNotFoundException extends RuntimeException {
+import com.composebean.global.exception.BusinessException;
+import com.composebean.global.exception.ErrorCode;
+
+public class OrderNotFoundException extends BusinessException {
 
     public OrderNotFoundException() {
-        super("주문을 찾을 수 없습니다.");
+        super(ErrorCode.ORDER_NOT_FOUND);
     }
 }

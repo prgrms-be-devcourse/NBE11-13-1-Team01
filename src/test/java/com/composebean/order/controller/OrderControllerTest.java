@@ -6,6 +6,7 @@ import com.composebean.order.domain.PaymentStatus;
 import com.composebean.order.dto.OrderCreateResponse;
 import com.composebean.order.dto.OrderDetailResponse;
 import com.composebean.order.dto.OrderItemResponse;
+import com.composebean.order.exception.OrderNotFoundException;
 import com.composebean.order.service.OrderCreateService;
 import com.composebean.order.service.OrderDetailService;
 import org.junit.jupiter.api.DisplayName;
@@ -22,8 +23,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -128,19 +128,45 @@ class OrderControllerTest {
     @DisplayName("주문 생성 요청값이 올바르지 않으면 400을 반환한다")
     void createOrderValidationFail() throws Exception {
         String request = """
-                {
-                  "email": "wrong-email",
-                  "address": "",
-                  "postalCode": "",
-                  "items": []
-                }
-                """;
+            {
+              "email": "wrong-email",
+              "address": "",
+              "postalCode": "",
+              "items": []
+            }
+            """;
 
         mockMvc.perform(post("/api/orders")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(request))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value("INVALID_REQUEST"));
+
+        verify(orderCreateService, never()).createOrder(any());
     }
 
+    @Test
+    @DisplayName("주문 ID가 0 이하이면 400을 반환한다")
+    void getOrderInvalidId() throws Exception {
+        mockMvc.perform(get("/api/orders/{orderId}", 0L))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("INVALID_REQUEST"));
+
+        verify(orderDetailService, never()).getOrder(any());
+    }
+
+    @Test
+    @DisplayName("존재하지 않는 주문을 조회하면 404를 반환한다")
+    void getOrderNotFound() throws Exception {
+        when(orderDetailService.getOrder(999L))
+                .thenThrow(new OrderNotFoundException());
+
+        mockMvc.perform(get("/api/orders/{orderId}", 999L))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.code").value("ORDER_NOT_FOUND"))
+                .andExpect(jsonPath("$.message")
+                        .value("주문을 찾을 수 없습니다."));
+
+        verify(orderDetailService).getOrder(999L);
+    }
 }

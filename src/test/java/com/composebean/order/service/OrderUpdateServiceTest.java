@@ -1,5 +1,7 @@
 package com.composebean.order.service;
 
+import com.composebean.global.exception.BusinessException;
+import com.composebean.global.exception.ErrorCode;
 import com.composebean.order.domain.DeliveryStatus;
 import com.composebean.order.domain.Order;
 import com.composebean.order.domain.OrderItem;
@@ -11,10 +13,6 @@ import com.composebean.product.repository.ProductRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,7 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @SpringBootTest // 가짜가 아닌 진짜 스프링 컨테이너와 DB 띄우기
 @Transactional // 테스트 후 DB 롤백
@@ -54,11 +52,23 @@ class OrderUpdateServiceTest {
 
     @Test
     @DisplayName("배송 상태 변경 확인")
-    void 배송_상태_변경_확인(){
-        assertThat(orderRepository.findById(orderId).get().getDeliveryStatus()).isEqualTo(DeliveryStatus.PREPARING);
-        DeliveryStatusUpdateRequest request = new DeliveryStatusUpdateRequest(DeliveryStatus.DELIVERED);
+    void 배송_상태_변경_확인() {
+        Order beforeUpdate = orderRepository.findById(orderId)
+                .orElseThrow();
+
+        assertThat(beforeUpdate.getDeliveryStatus())
+                .isEqualTo(DeliveryStatus.PREPARING);
+
+        DeliveryStatusUpdateRequest request =
+                new DeliveryStatusUpdateRequest(DeliveryStatus.DELIVERED);
+
         orderUpdateService.updateDeliveryStatus(request, orderId);
-        assertThat(orderRepository.findById(orderId).get().getDeliveryStatus()).isEqualTo(DeliveryStatus.DELIVERED);
+
+        Order afterUpdate = orderRepository.findById(orderId)
+                .orElseThrow();
+
+        assertThat(afterUpdate.getDeliveryStatus())
+                .isEqualTo(DeliveryStatus.DELIVERED);
     }
 
     // 테스트용 헬퍼 메서드
@@ -86,5 +96,20 @@ class OrderUpdateServiceTest {
                 .build();
 
         return item;
+    }
+
+    @Test
+    @DisplayName("존재하지 않는 주문의 배송 상태를 수정하면 예외가 발생한다")
+    void 주문이_없으면_예외가_발생한다() {
+        DeliveryStatusUpdateRequest request =
+                new DeliveryStatusUpdateRequest(DeliveryStatus.DELIVERED);
+
+        assertThatThrownBy(() ->
+                orderUpdateService.updateDeliveryStatus(request, Long.MAX_VALUE)
+        ).isInstanceOfSatisfying(
+                BusinessException.class,
+                exception -> assertThat(exception.getErrorCode())
+                        .isEqualTo(ErrorCode.ORDER_NOT_FOUND)
+        );
     }
 }

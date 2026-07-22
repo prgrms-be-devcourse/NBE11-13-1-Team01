@@ -33,7 +33,7 @@ class OrderBatchServiceTest {
     private ProductRepository productRepository;
 
     @Test
-    @DisplayName("주문 병합 시 수량과 소계(subtotal), 총합(totalPrice)등이 정확히 계산되어야 한다")
+    @DisplayName("주문 병합 시 수량과 소계(subtotal), 총합(totalPrice) 등이 정확히 계산되어야 한다")
     void mergeOrdersTest2() {
         // 1. Given: 상품 생성
         Product product = new Product("사과", 1000L, null, null, 345); // 가격 1000원
