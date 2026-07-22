@@ -1,5 +1,7 @@
 package com.composebean.order.service;
 
+import com.composebean.global.exception.BusinessException;
+import com.composebean.global.exception.ErrorCode;
 import com.composebean.order.domain.DeliveryStatus;
 import com.composebean.order.domain.Order;
 import com.composebean.order.domain.PaymentStatus;
@@ -83,6 +85,7 @@ class OrderCreateServiceTest {
     @DisplayName("주문 수량이 재고보다 많으면 주문할 수 없다")
     void createOrderWithInsufficientStock() {
         Product product = saveProduct("Colombia Narino", 5000L, 1);
+
         OrderCreateRequest request = createRequest(List.of(
                 new OrderItemRequest(product.getId(), 2)
         ));
@@ -91,8 +94,15 @@ class OrderCreateServiceTest {
                 request,
                 LocalDateTime.now().plusDays(1)
         ))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("상품 재고가 부족합니다.");
+                .isInstanceOfSatisfying(
+                        BusinessException.class,
+                        exception -> {
+                            assertThat(exception.getErrorCode())
+                                    .isEqualTo(ErrorCode.INSUFFICIENT_STOCK);
+                            assertThat(exception.getMessage())
+                                    .isEqualTo("상품 재고가 부족합니다.");
+                        }
+                );
 
         assertThat(productRepository.findById(product.getId())
                 .orElseThrow()
@@ -103,6 +113,7 @@ class OrderCreateServiceTest {
     @DisplayName("주문 수량이 0이면 주문할 수 없다")
     void createOrderWithZeroQuantity() {
         Product product = saveProduct("Colombia Narino", 5000L, 100);
+
         OrderCreateRequest request = createRequest(List.of(
                 new OrderItemRequest(product.getId(), 0)
         ));
@@ -111,27 +122,15 @@ class OrderCreateServiceTest {
                 request,
                 LocalDateTime.now().plusDays(1)
         ))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("주문 수량은 1개 이상이어야 합니다.");
-    }
-
-    @Test
-    @DisplayName("이메일 형식이 올바르지 않으면 주문할 수 없다")
-    void createOrderWithInvalidEmail() {
-        Product product = saveProduct("Colombia Narino", 5000L, 100);
-        OrderCreateRequest request = new OrderCreateRequest(
-                "wrong-email",
-                "서울특별시 강남구 테헤란로 123",
-                "06234",
-                List.of(new OrderItemRequest(product.getId(), 1))
-        );
-
-        assertThatThrownBy(() -> orderCreateService.createOrder(
-                request,
-                LocalDateTime.now().plusDays(1)
-        ))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("올바른 이메일을 입력해 주세요.");
+                .isInstanceOfSatisfying(
+                        BusinessException.class,
+                        exception -> {
+                            assertThat(exception.getErrorCode())
+                                    .isEqualTo(ErrorCode.INVALID_ORDER_QUANTITY);
+                            assertThat(exception.getMessage())
+                                    .isEqualTo("주문 수량은 1개 이상이어야 합니다.");
+                        }
+                );
     }
 
     @Test

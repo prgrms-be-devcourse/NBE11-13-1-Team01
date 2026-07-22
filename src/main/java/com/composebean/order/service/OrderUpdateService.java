@@ -10,8 +10,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.io.IOException;
-
 @Service
 @RequiredArgsConstructor
 public class OrderUpdateService {
@@ -19,11 +17,20 @@ public class OrderUpdateService {
     private final OrderRepository orderRepository;
 
     @Transactional
-    public OrderDetailResponse updateDeliveryStatus(DeliveryStatusUpdateRequest dto, Long orderId) {
-        Order order = orderRepository.findById(orderId).orElse(null);
-        if (order == null) {throw new BusinessException(ErrorCode.ORDER_NOT_FOUND);
-        }
+    public OrderDetailResponse updateDeliveryStatus(
+            DeliveryStatusUpdateRequest dto,
+            Long orderId
+    ) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() ->
+                        new BusinessException(ErrorCode.ORDER_NOT_FOUND)
+                );
+
         order.updateDeliveryStatus(dto.getDeliveryStatus());
-        return orderRepository.getOrderDetail(orderId).orElseThrow(()->new BusinessException(ErrorCode.ORDER_NOT_FOUND));
+
+        return orderRepository.getOrderDetail(orderId)
+                .orElseThrow(() ->
+                        new BusinessException(ErrorCode.ORDER_NOT_FOUND)
+                );
     }
 }

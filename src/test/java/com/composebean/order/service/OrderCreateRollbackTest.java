@@ -1,5 +1,7 @@
 package com.composebean.order.service;
 
+import com.composebean.global.exception.BusinessException;
+import com.composebean.global.exception.ErrorCode;
 import com.composebean.order.dto.OrderCreateRequest;
 import com.composebean.order.dto.OrderItemRequest;
 import com.composebean.product.domain.Product;
@@ -61,7 +63,15 @@ class OrderCreateRollbackTest {
                         request,
                         LocalDateTime.now().plusDays(1)
                 )
-        ).isInstanceOf(IllegalArgumentException.class);
+        ).isInstanceOfSatisfying(
+                BusinessException.class,
+                exception -> {
+                    assertThat(exception.getErrorCode())
+                            .isEqualTo(ErrorCode.INSUFFICIENT_STOCK);
+                    assertThat(exception.getMessage())
+                            .isEqualTo("상품 재고가 부족합니다.");
+                }
+        );
 
         Product savedFirstProduct = productRepository.findById(firstProductId)
                 .orElseThrow();

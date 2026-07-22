@@ -87,7 +87,9 @@ public class Order {
 
     @PrePersist
     private void prePersist() {
-        this.orderedAt = LocalDateTime.now();
+        if (this.orderedAt == null) {
+            this.orderedAt = LocalDateTime.now();
+        }
     }
 
     public List<OrderItem> getOrderItems() {
@@ -117,8 +119,6 @@ public class Order {
     public void removeOrderItem(OrderItem orderItem) {
         this.orderItems.remove(orderItem);
     }
-
-
 
     //추가
     public void updateTotalPrice(Long newTotal) {

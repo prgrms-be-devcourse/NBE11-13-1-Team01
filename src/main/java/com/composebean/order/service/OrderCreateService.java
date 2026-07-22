@@ -1,7 +1,9 @@
 package com.composebean.order.service;
 
-import com.composebean.order.domain.DeliveryStatus;
+import com.composebean.global.exception.BusinessException;
+import com.composebean.global.exception.ErrorCode;
 import com.composebean.order.domain.DeliveryAreaDuration;
+import com.composebean.order.domain.DeliveryStatus;
 import com.composebean.order.domain.Order;
 import com.composebean.order.domain.OrderItem;
 import com.composebean.order.domain.PaymentStatus;
@@ -29,13 +31,12 @@ public class OrderCreateService {
 
     @Transactional
     public OrderCreateResponse createOrder(OrderCreateRequest request) {
-        if (request == null || request.getAddress() == null) {
-            throw new IllegalArgumentException("주소는 필수입니다.");
-        }
+        validateAddress(request);
 
         int deliveryDays = DeliveryAreaDuration.getDeliveryDaysByAddress(
                 request.getAddress()
         );
+
         LocalDateTime deliveryExpectedDate = LocalDateTime.now()
                 .plusDays(deliveryDays);
 
@@ -56,7 +57,10 @@ public class OrderCreateService {
             Product product = productRepository.findById(itemRequest.getProductId())
                     .orElseThrow(ProductNotFoundException::new);
 
-            validateQuantity(itemRequest.getQuantity(), product.getStockQuantity());
+            validateQuantity(
+                    itemRequest.getQuantity(),
+                    product.getStockQuantity()
+            );
 
             long unitPrice = product.getPrice();
             long subtotal = unitPrice * itemRequest.getQuantity();
@@ -93,38 +97,37 @@ public class OrderCreateService {
         return OrderCreateResponse.from(savedOrder);
     }
 
+    private void validateAddress(OrderCreateRequest request) {
+        if (request == null
+                || request.getAddress() == null
+                || request.getAddress().isBlank()) {
+            throw new BusinessException(ErrorCode.INVALID_ORDER_REQUEST);
+        }
+    }
+
     private void validateOrderRequest(
             OrderCreateRequest request,
             LocalDateTime deliveryExpectedDate
     ) {
         if (request == null) {
-            throw new IllegalArgumentException("주문 정보는 필수입니다.");
+            throw new BusinessException(ErrorCode.INVALID_ORDER_REQUEST);
         }
-        if (request.getEmail() == null
-                || request.getEmail().isBlank()
-                || !request.getEmail().contains("@")) {
-            throw new IllegalArgumentException("올바른 이메일을 입력해 주세요.");
-        }
-        if (request.getAddress() == null || request.getAddress().isBlank()) {
-            throw new IllegalArgumentException("주소는 필수입니다.");
-        }
-        if (request.getPostalCode() == null || request.getPostalCode().isBlank()) {
-            throw new IllegalArgumentException("우편번호는 필수입니다.");
-        }
-        if (request.getItems() == null || request.getItems().isEmpty()) {
-            throw new IllegalArgumentException("주문 상품은 한 개 이상이어야 합니다.");
-        }
+
         if (deliveryExpectedDate == null) {
-            throw new IllegalArgumentException("배송 예정일은 필수입니다.");
+            throw new BusinessException(ErrorCode.INVALID_DELIVERY_DATE);
         }
     }
 
-    private void validateQuantity(Integer quantity, Integer stockQuantity) {
+    private void validateQuantity(
+            Integer quantity,
+            Integer stockQuantity
+    ) {
         if (quantity == null || quantity < 1) {
-            throw new IllegalArgumentException("주문 수량은 1개 이상이어야 합니다.");
+            throw new BusinessException(ErrorCode.INVALID_ORDER_QUANTITY);
         }
+
         if (quantity > stockQuantity) {
-            throw new IllegalArgumentException("상품 재고가 부족합니다.");
+            throw new BusinessException(ErrorCode.INSUFFICIENT_STOCK);
         }
     }
 }

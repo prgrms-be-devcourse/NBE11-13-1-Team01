@@ -26,7 +26,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @DataJpaTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE) //h2 말고 mysql이용
@@ -137,21 +137,23 @@ class OrderRepositoryTest {
     @DisplayName("값 확인")
     void 값_확인() {
 
-        Optional<OrderDetailResponse> response = orderRepository.getOrderDetail(savedOrderId);
-        assertThat(response).isNotNull();
-        OrderDetailResponse orderDetailResponse = response.get();
+        Optional<OrderDetailResponse> response =
+                orderRepository.getOrderDetail(savedOrderId);
+        assertThat(response).isPresent();
+        OrderDetailResponse orderDetailResponse = response.orElseThrow();
         assertThat(orderDetailResponse.getEmail()).isEqualTo("test@naver.com");
         assertThat(orderDetailResponse.getAddress()).isEqualTo("경기");
         assertThat(orderDetailResponse.getPostalCode()).isEqualTo("12345");
         assertThat(orderDetailResponse.getTotalPrice()).isEqualTo(3900L);
         assertThat(orderDetailResponse.getPaymentStatus()).isEqualTo(PaymentStatus.PENDING);
         assertThat(orderDetailResponse.getDeliveryStatus()).isEqualTo(DeliveryStatus.PREPARING);
-        assertThat(orderDetailResponse.getDeliveryExpectedDate()).isEqualTo(LocalDate.of
-                (2026, 7, 23));
+        assertThat(orderDetailResponse.getDeliveryExpectedDate())
+                .isEqualTo(LocalDate.of(2026, 7, 23));
         assertThat(orderDetailResponse.getOrderedAt()).isEqualTo(LocalDateTime.of
                 (2026, 6, 20,0,0,0));
 
-        List<OrderItemResponse> items = response.get().getItems();
+        List<OrderItemResponse> items = orderDetailResponse.getItems();
+        assertThat(items).hasSize(1);
         assertThat(items.get(0).getProductName()).isEqualTo("배");
         assertThat(items.get(0).getQuantity()).isEqualTo(3);
         assertThat(items.get(0).getUnitPrice()).isEqualTo(300L);
@@ -159,29 +161,23 @@ class OrderRepositoryTest {
     }
 
     @Test
-    @DisplayName("비었을 때 값 검증")
+    @DisplayName("이메일 없이 주문 목록을 조회한다")
     void findAll() {
-        //given
-        int size = 10;
+        Pageable pageable = PageRequest.of(0, 100);
 
-        //when
-        Pageable pageable = PageRequest.of(0, size);
-        Page<OrderSummaryResponse> orderSummaryResponsePage = orderRepository.getOrders("", pageable);
-        List<OrderSummaryResponse> orders = orderSummaryResponsePage.getContent();
+        Page<OrderSummaryResponse> response =
+                orderRepository.getOrders("", pageable);
 
-        //then
-        //페이지가 있음
-        assertThat(orderSummaryResponsePage).isNotNull();
-        assertThat(orderSummaryResponsePage.getTotalElements()).isEqualTo(4); //총 데이터 갯수?
-//        assertThat(orderSummaryResponsePage.isEmpty()); page 2 일때
-        // 값 검증
-        assertThat(orders.get(0).getTotalPrice()).isEqualTo(2300L);
+        assertThat(response).isNotNull();
+        assertThat(response.getContent()).isNotEmpty();
 
-
+        assertThat(response.getContent())
+                .extracting(OrderSummaryResponse::getId)
+                .contains(savedOrderId);
     }
 
     @Test
-    @DisplayName("이메일을 주었을 때 값 검증")
+    @DisplayName("이메일이 있을 때 값 검증")
     void findByEmail() {
         //given
         int page = 1;

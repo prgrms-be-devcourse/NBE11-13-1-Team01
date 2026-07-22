@@ -30,6 +30,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.willThrow;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 @WebMvcTest(OrderApiController.class)
 @Import(GlobalExceptionHandler.class)
@@ -86,26 +87,51 @@ class OrderApiControllerTest {
     }
 
     @Test
-    @DisplayName("아이디 찾기 실패")
+    @DisplayName("존재하지 않는 주문 ID이면 404를 반환한다")
     void notFoundException() throws Exception {
-        // given
-        Long invalidOrderId = -1L;
+        Long invalidOrderId = 999L;
 
-        String invalidRequestJson = """
+        String requestJson = """
         {
-          "deliveryStatus": "SHIPPING" 
+          "deliveryStatus": "SHIPPING"
         }
         """;
 
-        //존재하지 않는 ID로 요청이 온다고 가정
-        when(orderUpdateService.updateDeliveryStatus(any(DeliveryStatusUpdateRequest.class), eq(invalidOrderId)))
-                .thenThrow(new BusinessException(ErrorCode.ORDER_NOT_FOUND));
+        when(orderUpdateService.updateDeliveryStatus(
+                any(DeliveryStatusUpdateRequest.class),
+                eq(invalidOrderId)
+        )).thenThrow(new BusinessException(ErrorCode.ORDER_NOT_FOUND));
 
         mockMvc.perform(
                         patch("/api/orders/{orderId}/delivery-status", invalidOrderId)
                                 .contentType(MediaType.APPLICATION_JSON)
-                                .content(invalidRequestJson)
+                                .content(requestJson)
                 )
-                .andExpect(status().isNotFound());
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.code").value("ORDER_NOT_FOUND"))
+                .andExpect(jsonPath("$.message").value("주문을 찾을 수 없습니다."));
+
+        verify(orderUpdateService).updateDeliveryStatus(
+                any(DeliveryStatusUpdateRequest.class),
+                eq(invalidOrderId)
+        );
+    }
+
+    @Test
+    @DisplayName("주문 ID가 음수이면 400을 반환한다")
+    void invalidOrderId() throws Exception {
+        mockMvc.perform(
+                        patch("/api/orders/{orderId}/delivery-status", -1L)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("""
+                                {
+                                  "deliveryStatus": "SHIPPING"
+                                }
+                                """)
+                )
+                .andExpect(status().isBadRequest());
+
+        verify(orderUpdateService, never())
+                .updateDeliveryStatus(any(), any());
     }
 }
