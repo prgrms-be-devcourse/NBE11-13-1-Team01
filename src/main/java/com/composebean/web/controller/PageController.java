@@ -3,6 +3,7 @@ package com.composebean.web.controller;
 import com.composebean.order.dto.OrderCreateResponse;
 import com.composebean.order.service.OrderCreateService;
 import com.composebean.order.service.OrderDetailService;
+import com.composebean.order.service.OrderInquiryService;
 import com.composebean.product.dto.ProductCreateRequest;
 import com.composebean.product.dto.ProductStockUpdateRequest;
 import com.composebean.product.dto.ProductUpdateRequest;
@@ -10,6 +11,8 @@ import com.composebean.product.service.ProductService;
 import com.composebean.web.dto.OrderForm;
 import com.composebean.web.dto.ProductForm;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -27,6 +30,7 @@ public class PageController {
     private final ProductService productService;
     private final OrderCreateService orderCreateService;
     private final OrderDetailService orderDetailService;
+    private final OrderInquiryService orderInquiryService;
 
     @GetMapping({"/", "/order"})
     public String orderPage(
@@ -65,7 +69,8 @@ public class PageController {
             Model model
     ) {
         model.addAttribute("email", email);
-        model.addAttribute("orders", List.of());
+        Pageable pageable = PageRequest.of(0, 1000);
+        model.addAttribute("orders", orderInquiryService.getOrders(email,pageable));
 
         return "order-list";
     }

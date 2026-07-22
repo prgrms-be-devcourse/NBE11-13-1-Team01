@@ -27,9 +27,9 @@ public class OrderBatchService {
         // 여기서 날짜기준 & 결제 보류 중 조회로 바꾸기  //여기 부분은 해도 된다.
         LocalDateTime now = LocalDateTime.now();
         // 어제 오후 2시
-        LocalDateTime startDate = now.minusDays(1).withHour(10).withMinute(0).withSecond(0).withNano(0);
+        LocalDateTime startDate = now.minusDays(1).withHour(14).withMinute(0).withSecond(0).withNano(0);
         // 오늘 오후 1시 59분 59초
-        LocalDateTime endDate = now.withHour(18).withMinute(59).withSecond(59).withNano(0);
+        LocalDateTime endDate = now.withHour(13).withMinute(59).withSecond(59).withNano(0);
         List<Order> orders = orderRepository.findByOrderedAtBetweenAndPaymentStatus(startDate, endDate, PaymentStatus.PENDING);
 
         // 이메일, 주소로 그룹핑
