@@ -4,7 +4,6 @@ import com.composebean.order.domain.DeliveryStatus;
 import com.composebean.order.domain.Order;
 import com.composebean.order.domain.OrderItem;
 import com.composebean.order.domain.PaymentStatus;
-import com.composebean.order.repository.OrderItemRepository;
 import com.composebean.order.repository.OrderRepository;
 import com.composebean.product.domain.Product;
 import com.composebean.product.repository.ProductRepository;
@@ -22,7 +21,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest
 @Transactional
-class orderAutoUpdateTest {
+class OrderAutoUpdateTest {
 
     @Autowired
     private OrderRepository orderRepository;
