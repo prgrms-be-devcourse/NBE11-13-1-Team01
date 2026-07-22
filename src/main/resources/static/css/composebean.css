@@ -19,7 +19,7 @@ body {
 }
 
 a { color: inherit; text-decoration: none; }
-button, input, textarea { font: inherit; }
+button, input, select, textarea { font: inherit; }
 button { cursor: pointer; }
 
 .page-shell {
@@ -75,7 +75,7 @@ h1, h2 { margin: 0 0 24px; font-size: 18px; }
 .compact-search input, .wide-search input { flex: 1; }
 .wide-search { margin: 10px 0 24px; }
 
-input, textarea {
+input, select, textarea {
     width: 100%;
     border: 1px solid #d8d8da;
     border-radius: 11px;
@@ -84,8 +84,16 @@ input, textarea {
     outline: none;
 }
 
-input:focus, textarea:focus { border-color: #999; }
+input:focus, select:focus, textarea:focus { border-color: #999; }
 textarea { min-height: 90px; resize: vertical; }
+.delivery-region-select {
+    width: 100%;
+    height: 44px;
+    padding: 10px 12px;
+    border: 1px solid #d8d8da;
+    border-radius: 11px;
+    background: var(--white);
+}
 
 .primary-button, .dark-button, .secondary-button {
     border: 0;

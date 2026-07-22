@@ -13,6 +13,7 @@ import java.util.List;
 public class OrderForm {
 
     private String email;
+    private String deliveryRegion;
     private String address;
     private String postalCode;
     private List<OrderItemForm> items = new ArrayList<>();
@@ -29,7 +30,7 @@ public class OrderForm {
 
         return OrderCreateRequest.builder()
                 .email(email)
-                .address(address)
+                .address(deliveryRegion + " " + address)
                 .postalCode(postalCode)
                 .items(itemRequests)
                 .build();

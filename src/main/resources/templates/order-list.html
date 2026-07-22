@@ -30,10 +30,10 @@
                     <strong th:text="|주문 #${order.id}|">주문 #15</strong>
                     <span class="status-badge" th:text="${order.deliveryStatus}">배송 중</span>
                 </div>
-                <time th:text="${#temporals.format(order.orderedAt, 'yyyy-MM-dd HH:mm')}">2026-07-16 13:30</time>
+                <time th:text="${#temporals.format(order.orderedAt, 'yyyy-MM-dd')}">2026-07-16</time>
                 <dl>
                     <dt>주문자</dt><dd th:text="${order.email}">customer@example.com</dd>
-                    <dt>배송 예정일</dt><dd th:text="${order.deliveryExpectedDate}">2026-07-17</dd>
+                    <dt>배송 예정일</dt><dd th:text="${#temporals.format(order.deliveryExpectedDate, 'yyyy-MM-dd')}">2026-07-17</dd>
                     <dt>결제 상태</dt><dd th:text="${order.paymentStatus}">완료</dd>
                     <dt>총금액</dt><dd th:text="|${#numbers.formatInteger(order.totalPrice, 0, 'COMMA')}원|">0원</dd>
                 </dl>

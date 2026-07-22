@@ -88,5 +88,7 @@ orderForm.addEventListener("submit", event => {
     if (cart.size === 0) {
         event.preventDefault();
         orderMessage.textContent = "주문할 상품을 한 개 이상 추가해 주세요.";
+        return;
     }
+
 });
