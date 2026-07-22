@@ -25,3 +25,7 @@ spring:
 
 file:
   upload-dir: uploads/products
+
+slack:
+  bot-token: ${SLACK_BOT_TOKEN:}
+  order-receiver-id: ${SLACK_ORDER_RECEIVER_ID:}

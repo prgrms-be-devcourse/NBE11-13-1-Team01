@@ -10,11 +10,13 @@ import com.composebean.order.domain.PaymentStatus;
 import com.composebean.order.dto.OrderCreateRequest;
 import com.composebean.order.dto.OrderCreateResponse;
 import com.composebean.order.dto.OrderItemRequest;
+import com.composebean.order.event.OrderCreatedEvent;
 import com.composebean.order.repository.OrderRepository;
 import com.composebean.product.domain.Product;
 import com.composebean.product.exception.ProductNotFoundException;
 import com.composebean.product.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,6 +30,7 @@ public class OrderCreateService {
 
     private final ProductRepository productRepository;
     private final OrderRepository orderRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
     public OrderCreateResponse createOrder(OrderCreateRequest request) {
@@ -54,7 +57,8 @@ public class OrderCreateService {
         long totalPrice = 0L;
 
         for (OrderItemRequest itemRequest : request.getItems()) {
-            Product product = productRepository.findById(itemRequest.getProductId())
+            Product product = productRepository
+                    .findByIdAndDeletedAtIsNull(itemRequest.getProductId())
                     .orElseThrow(ProductNotFoundException::new);
 
             validateQuantity(
@@ -93,6 +97,30 @@ public class OrderCreateService {
         }
 
         Order savedOrder = orderRepository.save(order);
+
+        List<OrderCreatedEvent.OrderItemInfo> eventItems =
+                savedOrder.getOrderItems().stream()
+                        .map(orderItem ->
+                                new OrderCreatedEvent.OrderItemInfo(
+                                        orderItem.getProduct().getName(),
+                                        orderItem.getQuantity(),
+                                        orderItem.getUnitPrice(),
+                                        orderItem.getSubtotal()
+                                )
+                        )
+                        .toList();
+
+        eventPublisher.publishEvent(
+                new OrderCreatedEvent(
+                        savedOrder.getId(),
+                        savedOrder.getEmail(),
+                        savedOrder.getAddress(),
+                        savedOrder.getPostalCode(),
+                        savedOrder.getTotalPrice(),
+                        savedOrder.getOrderedAt(),
+                        eventItems
+                )
+        );
 
         return OrderCreateResponse.from(savedOrder);
     }
