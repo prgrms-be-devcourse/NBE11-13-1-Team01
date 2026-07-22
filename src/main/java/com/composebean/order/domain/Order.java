@@ -88,12 +88,12 @@ public class Order {
         this.orderedAt = orderedAt;  //pre 속성 땜에 나중에 지워야함
     }
 
-    /*@PrePersist
+    @PrePersist
     private void prePersist() {
         if (this.orderedAt == null) {
             this.orderedAt = LocalDateTime.now();
         }
-    }*/
+    }
 
     public List<OrderItem> getOrderItems() {
         return Collections.unmodifiableList(orderItems);
