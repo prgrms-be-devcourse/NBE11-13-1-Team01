@@ -10,6 +10,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.springframework.web.multipart.MultipartFile;
 
 @Schema(description = "상품 등록 요청")
 @Getter
@@ -36,18 +37,18 @@ public class ProductCreateRequest {
     private String description;
 
     @Schema(
-            description = "상품 이미지 URL",
-            example = "https://example.com/images/colombia-beans.jpg"
+            description = "상품 이미지 파일",
+            type = "string",
+            format = "binary"
     )
-    @Size(max = 500, message = "상품 이미지 URL은 500자 이하여야 합니다.")
-    private String imageUrl;
+    private MultipartFile imageFile;
 
     @Schema(description = "재고 수량", example = "100")
     @NotNull(message = "재고 수량은 필수입니다.")
     @Min(value = 0, message = "재고 수량은 0개 이상이어야 합니다.")
     private Integer stockQuantity;
 
-    public Product toEntity() {
+    public Product toEntity(String imageUrl) {
         return Product.builder()
                 .name(name)
                 .price(price)

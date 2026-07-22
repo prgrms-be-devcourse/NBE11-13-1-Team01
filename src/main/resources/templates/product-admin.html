@@ -17,29 +17,63 @@
     <main class="admin-layout">
         <section class="admin-list-section">
             <h1>상품 관리</h1>
-            <p class="inline-message" th:if="${#lists.isEmpty(products)}">등록된 상품이 없습니다.</p>
+
+            <p class="inline-message"
+               th:if="${#lists.isEmpty(products)}">
+                등록된 상품이 없습니다.
+            </p>
 
             <div class="admin-product-list">
-                <article class="admin-product-row" th:each="product : ${products}">
+                <article class="admin-product-row"
+                         th:each="product : ${products}">
+
                     <div class="product-image small">
                         <img th:if="${product.imageUrl != null and !product.imageUrl.isBlank()}"
-                             th:src="${product.imageUrl}" th:alt="${product.name}">
-                        <span th:unless="${product.imageUrl != null and !product.imageUrl.isBlank()}">이미지</span>
+                             th:src="${product.imageUrl}"
+                             th:alt="${product.name}">
+
+                        <span th:unless="${product.imageUrl != null and !product.imageUrl.isBlank()}">
+                            이미지
+                        </span>
                     </div>
+
                     <div class="admin-product-copy">
-                        <span th:text="${product.description == null ? '상품 설명 없음' : product.description}">상품 설명</span>
-                        <strong th:text="${product.name}">상품명</strong>
+                        <span th:text="${product.description == null ? '상품 설명 없음' : product.description}">
+                            상품 설명
+                        </span>
+
+                        <strong th:text="${product.name}">
+                            상품명
+                        </strong>
                     </div>
-                    <span th:text="|${#numbers.formatInteger(product.price, 0, 'COMMA')}원|">0원</span>
-                    <span th:text="|${product.stockQuantity}개|">0개</span>
-                    <button type="button" class="secondary-button edit-product-button"
-                            th:attr="data-id=${product.id},data-name=${product.name},data-description=${product.description},data-price=${product.price},data-stock=${product.stockQuantity}">
+
+                    <span th:text="|${#numbers.formatInteger(product.price, 0, 'COMMA')}원|">
+                        0원
+                    </span>
+
+                    <span th:text="|${product.stockQuantity}개|">
+                        0개
+                    </span>
+
+                    <button type="button"
+                            class="secondary-button edit-product-button"
+                            th:attr="
+                                data-id=${product.id},
+                                data-name=${product.name},
+                                data-description=${product.description},
+                                data-price=${product.price},
+                                data-stock=${product.stockQuantity},
+                                data-image-url=${product.imageUrl}">
                         수정
                     </button>
-                    <form method="post" th:action="@{/admin/products/{id}/delete(id=${product.id})}">
-                        <button type="submit" class="secondary-button">삭제</button>
-                    </form>
 
+                    <form method="post"
+                          th:action="@{/admin/products/{id}/delete(id=${product.id})}">
+                        <button type="submit"
+                                class="secondary-button">
+                            삭제
+                        </button>
+                    </form>
                 </article>
             </div>
         </section>
@@ -50,33 +84,101 @@
                 <span>필수 입력 *</span>
             </div>
 
-            <form id="product-form" class="stacked-form" method="post"
-                  enctype="multipart/form-data" th:action="@{/admin/products}">
+            <div class="form-error-message"
+                 th:if="${errorMessage != null}">
+                <strong>상품 처리에 실패했습니다.</strong>
+                <span th:text="${errorMessage}">
+                    오류 메시지
+                </span>
+            </div>
+
+            <form id="product-form"
+                  class="stacked-form"
+                  method="post"
+                  enctype="multipart/form-data"
+                  th:action="@{/admin/products}">
+
                 <label for="product-name">상품명 *</label>
-                <input id="product-name" name="name" type="text" maxlength="100"
-                       placeholder="상품명을 입력하세요" required>
+                <input id="product-name"
+                       name="name"
+                       type="text"
+                       maxlength="100"
+                       placeholder="상품명을 입력하세요"
+                       required>
 
                 <label for="product-description">상품 설명</label>
-                <textarea id="product-description" name="description" maxlength="255"
+                <textarea id="product-description"
+                          name="description"
+                          maxlength="255"
                           placeholder="상품 설명을 입력하세요"></textarea>
 
                 <label for="product-price">상품 가격 *</label>
-                <input id="product-price" name="price" type="number" min="0" placeholder="0원" required>
+                <input id="product-price"
+                       name="price"
+                       type="number"
+                       min="0"
+                       placeholder="0원"
+                       required>
 
                 <label for="product-image-file">상품 이미지</label>
-                <input id="product-image-file" name="imageFile" type="file" accept="image/*">
-                <p class="field-help">JPG, PNG 등의 이미지 파일을 선택해 주세요.</p>
+                <input id="product-image-file"
+                       name="imageFile"
+                       type="file"
+                       accept="image/*">
 
-                <div id="initial-stock-field">
-                    <label id="product-stock-label" for="product-stock">초기 재고 *</label>
-                    <input id="product-stock" name="stockQuantity" type="number" min="0" placeholder="0개" required>
+                <p class="field-help">
+                    JPG, PNG 등의 이미지 파일을 선택해 주세요.
+                </p>
+
+                <div id="current-image-area" hidden>
+                    <p class="field-help">현재 상품 이미지</p>
+
+                    <div class="product-image">
+                        <img id="current-product-image"
+                             src=""
+                             alt="현재 상품 이미지">
+                    </div>
+
+                    <label class="image-delete-option"
+                           for="delete-product-image">
+                        <input id="delete-product-image"
+                               name="deleteImage"
+                               type="checkbox"
+                               value="true">
+                        <span>기존 이미지 삭제</span>
+                    </label>
                 </div>
 
-                <p class="field-help">가격과 재고는 0 이상의 값만 입력할 수 있습니다.</p>
+                <div id="initial-stock-field">
+                    <label id="product-stock-label"
+                           for="product-stock">
+                        초기 재고 *
+                    </label>
+
+                    <input id="product-stock"
+                           name="stockQuantity"
+                           type="number"
+                           min="0"
+                           placeholder="0개"
+                           required>
+                </div>
+
+                <p class="field-help">
+                    가격과 재고는 0 이상의 값만 입력할 수 있습니다.
+                </p>
 
                 <div class="button-row">
-                    <button id="product-form-reset" type="button" class="secondary-button">초기화</button>
-                    <button id="product-submit" type="submit" class="primary-button">등록하기</button>
+                    <button id="product-form-reset"
+                            type="button"
+                            class="secondary-button">
+                        초기화
+                    </button>
+
+                    <button id="product-submit"
+                            type="submit"
+                            class="primary-button">
+                        등록하기
+                    </button>
                 </div>
             </form>
         </aside>

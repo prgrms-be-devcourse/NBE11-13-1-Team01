@@ -1,5 +1,6 @@
 package com.composebean.web.controller;
 
+import com.composebean.global.exception.BusinessException;
 import com.composebean.order.dto.OrderCreateResponse;
 import com.composebean.order.service.OrderCreateService;
 import com.composebean.order.service.OrderDetailService;
@@ -15,13 +16,8 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-
-import java.util.List;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 @Controller
 @RequiredArgsConstructor
@@ -37,7 +33,10 @@ public class PageController {
             @RequestParam(required = false) String name,
             Model model
     ) {
-        model.addAttribute("products", productService.getProducts(name).getProducts());
+        model.addAttribute(
+                "products",
+                productService.getProducts(name).getProducts()
+        );
         model.addAttribute("searchName", name);
         model.addAttribute("orderForm", new OrderForm());
 
@@ -45,10 +44,13 @@ public class PageController {
     }
 
     @PostMapping("/order")
-    public String createOrder(@ModelAttribute OrderForm orderForm) {
-        OrderCreateResponse response = orderCreateService.createOrder(
-                orderForm.toRequest()
-        );
+    public String createOrder(
+            @ModelAttribute OrderForm orderForm
+    ) {
+        OrderCreateResponse response =
+                orderCreateService.createOrder(
+                        orderForm.toRequest()
+                );
 
         return "redirect:/receipt/" + response.getOrderId();
     }
@@ -58,7 +60,10 @@ public class PageController {
             @PathVariable Long orderId,
             Model model
     ) {
-        model.addAttribute("order", orderDetailService.getOrder(orderId));
+        model.addAttribute(
+                "order",
+                orderDetailService.getOrder(orderId)
+        );
 
         return "receipt";
     }
@@ -69,29 +74,45 @@ public class PageController {
             Model model
     ) {
         model.addAttribute("email", email);
+
         Pageable pageable = PageRequest.of(0, 1000);
-        model.addAttribute("orders", orderInquiryService.getOrders(email,pageable));
+
+        model.addAttribute(
+                "orders",
+                orderInquiryService.getOrders(email, pageable)
+        );
 
         return "order-list";
     }
 
     @GetMapping("/admin/products")
     public String productAdminPage(Model model) {
-        model.addAttribute("products", productService.getProducts(null).getProducts());
-        model.addAttribute("productForm", new ProductForm());
+        model.addAttribute(
+                "products",
+                productService.getProducts(null).getProducts()
+        );
+        model.addAttribute(
+                "productForm",
+                new ProductForm()
+        );
 
         return "product-admin";
     }
 
     @PostMapping("/admin/products")
-    public String createProduct(@ModelAttribute ProductForm productForm) {
-        ProductCreateRequest request = ProductCreateRequest.builder()
-                .name(productForm.getName())
-                .price(productForm.getPrice())
-                .description(productForm.getDescription())
-                .imageUrl(productForm.getImageUrl())
-                .stockQuantity(productForm.getStockQuantity())
-                .build();
+    public String createProduct(
+            @ModelAttribute ProductForm productForm
+    ) {
+        ProductCreateRequest request =
+                ProductCreateRequest.builder()
+                        .name(productForm.getName())
+                        .price(productForm.getPrice())
+                        .description(productForm.getDescription())
+                        .imageFile(productForm.getImageFile())
+                        .stockQuantity(
+                                productForm.getStockQuantity()
+                        )
+                        .build();
 
         productService.createProduct(request);
 
@@ -103,20 +124,28 @@ public class PageController {
             @PathVariable Long productId,
             @ModelAttribute ProductForm productForm
     ) {
-        ProductUpdateRequest request = ProductUpdateRequest.builder()
-                .name(productForm.getName())
-                .price(productForm.getPrice())
-                .description(productForm.getDescription())
-                .imageUrl(productForm.getImageUrl())
-                .build();
+        ProductUpdateRequest request =
+                ProductUpdateRequest.builder()
+                        .name(productForm.getName())
+                        .price(productForm.getPrice())
+                        .description(productForm.getDescription())
+                        .imageFile(productForm.getImageFile())
+                        .deleteImage(productForm.isDeleteImage())
+                        .build();
 
         productService.updateProduct(productId, request);
 
-        ProductStockUpdateRequest stockRequest = ProductStockUpdateRequest.builder()
-                .stockQuantity(productForm.getStockQuantity())
-                .build();
+        ProductStockUpdateRequest stockRequest =
+                ProductStockUpdateRequest.builder()
+                        .stockQuantity(
+                                productForm.getStockQuantity()
+                        )
+                        .build();
 
-        productService.updateStock(productId, stockRequest);
+        productService.updateStock(
+                productId,
+                stockRequest
+        );
 
         return "redirect:/admin/products";
     }
@@ -126,18 +155,37 @@ public class PageController {
             @PathVariable Long productId,
             @RequestParam Integer stockQuantity
     ) {
-        ProductStockUpdateRequest request = ProductStockUpdateRequest.builder()
-                .stockQuantity(stockQuantity)
-                .build();
+        ProductStockUpdateRequest request =
+                ProductStockUpdateRequest.builder()
+                        .stockQuantity(stockQuantity)
+                        .build();
 
-        productService.updateStock(productId, request);
+        productService.updateStock(
+                productId,
+                request
+        );
 
         return "redirect:/admin/products";
     }
 
     @PostMapping("/admin/products/{productId}/delete")
-    public String deleteProduct(@PathVariable Long productId) {
+    public String deleteProduct(
+            @PathVariable Long productId
+    ) {
         productService.deleteProduct(productId);
+
+        return "redirect:/admin/products";
+    }
+
+    @ExceptionHandler(BusinessException.class)
+    public String handleBusinessException(
+            BusinessException exception,
+            RedirectAttributes redirectAttributes
+    ) {
+        redirectAttributes.addFlashAttribute(
+                "errorMessage",
+                exception.getMessage()
+        );
 
         return "redirect:/admin/products";
     }
