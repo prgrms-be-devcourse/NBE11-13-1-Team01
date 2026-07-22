@@ -58,6 +58,9 @@ public class Order {
     @Column(nullable = false, updatable = false)
     private LocalDateTime orderedAt;
 
+    @Column
+    private LocalDateTime deletedAt;
+
     @OneToMany(
             mappedBy = "order",
             cascade = CascadeType.ALL
@@ -85,12 +88,12 @@ public class Order {
         this.orderedAt = orderedAt;  //pre 속성 땜에 나중에 지워야함
     }
 
-    @PrePersist
+    /*@PrePersist
     private void prePersist() {
         if (this.orderedAt == null) {
             this.orderedAt = LocalDateTime.now();
         }
-    }
+    }*/
 
     public List<OrderItem> getOrderItems() {
         return Collections.unmodifiableList(orderItems);
@@ -135,6 +138,10 @@ public class Order {
 
     public void updateDeliveryExpectedDate(LocalDateTime deliveryExpectedDate) {
         this.deliveryExpectedDate = deliveryExpectedDate;
+    }
+
+    public void delete() {
+        this.deletedAt = LocalDateTime.now();
     }
 
 }
