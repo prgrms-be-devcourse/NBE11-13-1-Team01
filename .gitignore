@@ -39,3 +39,6 @@ out/
 .env
 .env.*
 !.env.example
+
+# Uploaded files
+/uploads/

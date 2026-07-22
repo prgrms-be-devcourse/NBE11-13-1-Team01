@@ -9,6 +9,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.springframework.web.multipart.MultipartFile;
 
 @Schema(description = "상품 정보 수정 요청")
 @Getter
@@ -35,9 +36,12 @@ public class ProductUpdateRequest {
     private String description;
 
     @Schema(
-            description = "상품 이미지 URL",
-            example = "https://example.com/images/colombia-beans.jpg"
+            description = "변경할 상품 이미지 파일",
+            type = "string",
+            format = "binary"
     )
-    @Size(max = 500, message = "상품 이미지 URL은 500자 이하여야 합니다.")
-    private String imageUrl;
+    private MultipartFile imageFile;
+
+    @Schema(description = "기존 상품 이미지 삭제 여부", example = "false")
+    private boolean deleteImage;
 }

@@ -52,6 +52,17 @@ public enum ErrorCode {
             HttpStatus.INTERNAL_SERVER_ERROR,
             "INTERNAL_SERVER_ERROR",
             "서버 내부 오류가 발생했습니다."
+    ),
+
+    INVALID_IMAGE_FILE(
+            HttpStatus.BAD_REQUEST,
+            "INVALID_IMAGE_FILE",
+            "올바른 이미지 파일을 입력해 주세요."
+    ),
+    IMAGE_STORAGE_FAILED(
+            HttpStatus.INTERNAL_SERVER_ERROR,
+            "IMAGE_STORAGE_FAILED",
+            "이미지 파일 저장에 실패했습니다."
     );
 
     private final HttpStatus status;

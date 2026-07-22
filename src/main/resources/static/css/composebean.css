@@ -214,6 +214,69 @@ button:disabled { cursor: not-allowed; opacity: .45; }
     .admin-product-row > span { display: none; }
 }
 
+.form-error-message {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin: 0 0 18px;
+    padding: 14px 16px;
+    border: 1px solid #d9a3a3;
+    border-radius: 11px;
+    background: #fff4f4;
+    color: #9f2f2f;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.form-error-message strong {
+    font-size: 14px;
+    font-weight: 700;
+}
+
+#current-image-area {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 4px;
+    padding: 14px;
+    border: 1px solid var(--line);
+    border-radius: 11px;
+    background: rgba(255, 255, 255, 0.45);
+}
+
+#current-image-area[hidden] {
+    display: none;
+}
+
+#current-image-area > .field-help {
+    margin: 0;
+}
+
+#current-image-area .product-image {
+    width: 120px;
+    height: 120px;
+    border-radius: 10px;
+}
+
+.image-delete-option {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: fit-content;
+    margin: 0 !important;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+}
+
+.image-delete-option input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    margin: 0;
+    padding: 0;
+    accent-color: #222326;
+}
+
 @media (max-width: 560px) {
     .page-shell { width: min(100% - 18px, 1180px); }
     .brand, .page-title { font-size: 27px; }

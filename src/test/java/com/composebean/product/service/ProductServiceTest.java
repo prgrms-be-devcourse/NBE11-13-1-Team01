@@ -1,5 +1,6 @@
 package com.composebean.product.service;
 
+import com.composebean.global.file.ImageStorageService;
 import com.composebean.product.domain.Product;
 import com.composebean.product.dto.ProductCreateRequest;
 import com.composebean.product.dto.ProductListResponse;
@@ -15,6 +16,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.mock.web.MockMultipartFile;
 
 import java.util.List;
 import java.util.Optional;
@@ -32,6 +34,9 @@ class ProductServiceTest {
     @Mock
     private ProductRepository productRepository;
 
+    @Mock
+    private ImageStorageService imageStorageService;
+
     @InjectMocks
     private ProductService productService;
 
@@ -43,19 +48,18 @@ class ProductServiceTest {
                 .name("콜롬비아 원두")
                 .price(18000L)
                 .description("산미와 단맛이 균형 잡힌 원두")
-                .imageUrl("https://example.com/images/colombia-beans.jpg")
+                .imageUrl("/images/products/colombia-beans.jpg")
                 .stockQuantity(100)
                 .build();
     }
 
     @Test
-    @DisplayName("상품을 등록한다")
-    void createProduct() {
+    @DisplayName("이미지 없이 상품을 등록한다")
+    void createProductWithoutImage() {
         ProductCreateRequest request = ProductCreateRequest.builder()
                 .name("콜롬비아 원두")
                 .price(18000L)
                 .description("산미와 단맛이 균형 잡힌 원두")
-                .imageUrl("https://example.com/images/colombia-beans.jpg")
                 .stockQuantity(100)
                 .build();
 
@@ -68,8 +72,43 @@ class ProductServiceTest {
         assertThat(response.getPrice()).isEqualTo(18000L);
         assertThat(response.getDescription())
                 .isEqualTo("산미와 단맛이 균형 잡힌 원두");
+        assertThat(response.getImageUrl()).isNull();
         assertThat(response.getStockQuantity()).isEqualTo(100);
 
+        verify(productRepository).save(any(Product.class));
+        verify(imageStorageService, never()).store(any());
+    }
+
+    @Test
+    @DisplayName("이미지를 포함하여 상품을 등록한다")
+    void createProductWithImage() {
+        MockMultipartFile imageFile = new MockMultipartFile(
+                "imageFile",
+                "colombia-beans.jpg",
+                "image/jpeg",
+                "image-content".getBytes()
+        );
+
+        ProductCreateRequest request = ProductCreateRequest.builder()
+                .name("콜롬비아 원두")
+                .price(18000L)
+                .description("산미와 단맛이 균형 잡힌 원두")
+                .imageFile(imageFile)
+                .stockQuantity(100)
+                .build();
+
+        when(imageStorageService.store(imageFile))
+                .thenReturn("/uploads/products/stored-image.jpg");
+
+        when(productRepository.save(any(Product.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        ProductResponse response = productService.createProduct(request);
+
+        assertThat(response.getImageUrl())
+                .isEqualTo("/uploads/products/stored-image.jpg");
+
+        verify(imageStorageService).store(imageFile);
         verify(productRepository).save(any(Product.class));
     }
 
@@ -149,13 +188,12 @@ class ProductServiceTest {
     }
 
     @Test
-    @DisplayName("상품 정보를 수정한다")
-    void updateProduct() {
+    @DisplayName("이미지 없이 상품 정보를 수정하면 기존 이미지를 유지한다")
+    void updateProductWithoutImage() {
         ProductUpdateRequest request = ProductUpdateRequest.builder()
                 .name("에티오피아 원두")
                 .price(20000L)
                 .description("꽃향과 산미가 특징인 원두")
-                .imageUrl("https://example.com/images/ethiopia-beans.jpg")
                 .build();
 
         when(productRepository.findById(1L))
@@ -168,10 +206,43 @@ class ProductServiceTest {
         assertThat(response.getDescription())
                 .isEqualTo("꽃향과 산미가 특징인 원두");
         assertThat(response.getImageUrl())
-                .isEqualTo("https://example.com/images/ethiopia-beans.jpg");
+                .isEqualTo("/images/products/colombia-beans.jpg");
         assertThat(response.getStockQuantity()).isEqualTo(100);
 
+        verify(imageStorageService, never()).store(any());
         verify(productRepository).findById(1L);
+        verify(productRepository).flush();
+    }
+
+    @Test
+    @DisplayName("새 이미지로 상품 정보를 수정한다")
+    void updateProductWithImage() {
+        MockMultipartFile imageFile = new MockMultipartFile(
+                "imageFile",
+                "ethiopia-beans.jpg",
+                "image/jpeg",
+                "new-image-content".getBytes()
+        );
+
+        ProductUpdateRequest request = ProductUpdateRequest.builder()
+                .name("에티오피아 원두")
+                .price(20000L)
+                .description("꽃향과 산미가 특징인 원두")
+                .imageFile(imageFile)
+                .build();
+
+        when(productRepository.findById(1L))
+                .thenReturn(Optional.of(product));
+
+        when(imageStorageService.store(imageFile))
+                .thenReturn("/uploads/products/ethiopia-beans.jpg");
+
+        ProductResponse response = productService.updateProduct(1L, request);
+
+        assertThat(response.getImageUrl())
+                .isEqualTo("/uploads/products/ethiopia-beans.jpg");
+
+        verify(imageStorageService).store(imageFile);
         verify(productRepository).flush();
     }
 
@@ -182,7 +253,6 @@ class ProductServiceTest {
                 .name("에티오피아 원두")
                 .price(20000L)
                 .description("꽃향과 산미가 특징인 원두")
-                .imageUrl("https://example.com/images/ethiopia-beans.jpg")
                 .build();
 
         when(productRepository.findById(999L))
@@ -193,6 +263,7 @@ class ProductServiceTest {
         ).isInstanceOf(ProductNotFoundException.class);
 
         verify(productRepository, never()).flush();
+        verify(imageStorageService, never()).store(any());
     }
 
     @Test
@@ -256,6 +327,7 @@ class ProductServiceTest {
                 .isInstanceOf(ProductNotFoundException.class);
 
         verify(productRepository).findById(999L);
-        verify(productRepository, never()).delete(any(Product.class));
+        verify(productRepository, never())
+                .delete(any(Product.class));
     }
 }
