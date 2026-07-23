@@ -69,7 +69,8 @@ public class ProductService {
     ) {
         Product product = findProduct(productId);
 
-        String imageUrl = product.getImageUrl();
+        String previousImageUrl = product.getImageUrl();
+        String imageUrl = previousImageUrl;
 
         if (hasImage(request.getImageFile())) {
             imageUrl = imageStorageService.store(
@@ -87,6 +88,11 @@ public class ProductService {
         );
 
         productRepository.flush();
+
+        if (hasImage(request.getImageFile())
+                || request.isDeleteImage()) {
+            imageStorageService.delete(previousImageUrl);
+        }
 
         return ProductResponse.from(product);
     }
