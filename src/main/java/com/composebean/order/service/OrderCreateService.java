@@ -58,7 +58,7 @@ public class OrderCreateService {
 
         for (OrderItemRequest itemRequest : request.getItems()) {
             Product product = productRepository
-                    .findByIdAndDeletedAtIsNull(itemRequest.getProductId())
+                    .findByIdForUpdate(itemRequest.getProductId())
                     .orElseThrow(ProductNotFoundException::new);
 
             validateQuantity(
