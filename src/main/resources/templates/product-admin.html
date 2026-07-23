@@ -4,17 +4,22 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Compose Bean | 상품 관리</title>
-    <link rel="stylesheet" th:href="@{/css/composebean.css(v=6)}">
+    <link rel="stylesheet" th:href="@{/css/composebean.css(v=7)}">
 </head>
 <body class="product-admin-body">
 <header class="catalog-header product-admin-site-header">
     <span aria-hidden="true"></span>
-    <a class="catalog-brand" th:href="@{/}" aria-label="Compose Bean 홈">
+
+    <a class="catalog-brand"
+       th:href="@{/}"
+       aria-label="Compose Bean 홈">
         <span>COMPOSE</span>
         <strong>BEAN</strong>
     </a>
+
     <div class="catalog-header-actions">
-        <a class="catalog-order-history-link" th:href="@{/admin/orders}">
+        <a class="catalog-order-history-link"
+           th:href="@{/admin/orders}">
             주문관리
         </a>
     </div>
@@ -34,30 +39,37 @@
                 <article class="admin-product-row admin-product-card"
                          th:each="product : ${products}">
 
-                    <div class="product-image admin-card-image">
+                    <div class="product-image admin-card-image"
+                         th:classappend="${product.name == '종이컵'
+                            or product.name == '플라스틱컵'
+                            or product.name == '테이크아웃 컵 리드'}
+                            ? ' admin-card-image--cup'">
                         <img th:if="${product.imageUrl != null and !product.imageUrl.isBlank()}"
                              th:src="${product.imageUrl}"
                              th:alt="${product.name}">
 
                         <span th:unless="${product.imageUrl != null and !product.imageUrl.isBlank()}">
-                            COMPOSED BEAN
+                            COMPOSE BEAN
                         </span>
                     </div>
 
                     <div class="admin-product-copy">
-                        <span th:text="${product.description == null ? '상품 설명 없음' : product.description}">
-                            상품 설명
-                        </span>
-
                         <strong th:text="${product.name}">
                             상품명
                         </strong>
+
+                        <span th:text="${product.description == null or product.description.isBlank()
+                            ? '상품 설명 없음'
+                            : product.description}">
+                            상품 설명
+                        </span>
                     </div>
 
                     <div class="admin-product-meta">
                         <strong th:text="|${#numbers.formatInteger(product.price, 0, 'COMMA')}원|">
                             0원
                         </strong>
+
                         <span th:text="|재고 ${product.stockQuantity}개|">
                             재고 0개
                         </span>

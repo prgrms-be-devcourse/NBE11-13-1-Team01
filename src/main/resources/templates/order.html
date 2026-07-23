@@ -4,40 +4,62 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Compose Bean | 주문</title>
-    <link rel="stylesheet" th:href="@{/css/composebean.css(v=3)}">
+    <link rel="stylesheet" th:href="@{/css/composebean.css(v=13)}">
 </head>
+
 <body class="order-home">
 <div class="catalog-shell">
     <header class="catalog-header">
-        <form class="catalog-search header-search" method="get" th:action="@{/order}">
-            <label class="sr-only" for="product-search">상품명 검색</label>
+        <form class="catalog-search header-search"
+              method="get"
+              th:action="@{/order}">
+            <label class="sr-only"
+                   for="product-search">
+                상품명 검색
+            </label>
+
             <input id="product-search"
                    name="name"
                    type="search"
                    placeholder="상품명으로 검색"
                    th:value="${searchName}">
-            <button type="submit">SEARCH</button>
+
+            <button type="submit">
+                SEARCH
+            </button>
         </form>
 
-        <a class="catalog-brand" th:href="@{/}" aria-label="Compose Bean 홈">
+        <a class="catalog-brand"
+           th:href="@{/}"
+           aria-label="Compose Bean 홈">
             <span>COMPOSE</span>
             <strong>BEAN</strong>
         </a>
+
         <div class="catalog-header-actions">
-            <a class="catalog-order-history-link" th:href="@{/orders}">주문조회</a>
+            <a class="catalog-order-history-link"
+               th:href="@{/orders}">
+                주문조회
+            </a>
+
             <button id="cart-drawer-toggle"
                     class="catalog-cart-button"
                     type="button"
                     aria-controls="order-drawer"
                     aria-expanded="false">
-                <span class="catalog-cart-icon" aria-hidden="true">▧</span>
+                <span class="catalog-cart-icon"
+                      aria-hidden="true">
+                    ▧
+                </span>
+
                 <span>ORDER</span>
                 <strong id="drawer-cart-count">0</strong>
             </button>
         </div>
     </header>
 
-    <section class="catalog-hero" aria-label="Compose Bean 원두 소개">
+    <section class="catalog-hero"
+             aria-label="Compose Bean 원두 소개">
         <img th:src="@{/images/composebean-hero.png}"
              src="/images/composebean-hero.png"
              alt="Compose Bean 원두 패키지와 커피 원두">
@@ -45,33 +67,43 @@
 
     <main class="catalog-main">
         <section class="catalog-section">
-            <p class="inline-message" th:if="${#lists.isEmpty(products)}">
+            <p class="inline-message"
+               th:if="${#lists.isEmpty(products)}">
                 조회된 상품이 없습니다.
             </p>
 
             <div class="catalog-product-grid">
-                <article class="catalog-product-card" th:each="product : ${products}">
+                <article class="catalog-product-card"
+                         th:each="product : ${products}">
+
                     <a class="catalog-product-detail-link"
                        th:href="@{/products/{id}(id=${product.id})}">
-                    <div class="catalog-product-image">
-                        <img th:if="${product.imageUrl != null and !product.imageUrl.isBlank()}"
-                             th:src="${product.imageUrl}"
-                             th:alt="${product.name}">
-                        <span th:unless="${product.imageUrl != null and !product.imageUrl.isBlank()}">
-                            COMPOSED BEAN
-                        </span>
-                    </div>
+                        <div class="catalog-product-image">
+                            <img th:if="${product.imageUrl != null and !product.imageUrl.isBlank()}"
+                                 th:src="${product.imageUrl}"
+                                 th:alt="${product.name}">
+
+                            <span th:unless="${product.imageUrl != null and !product.imageUrl.isBlank()}">
+                                COMPOSE BEAN
+                            </span>
+                        </div>
                     </a>
 
                     <div class="catalog-product-meta">
                         <div>
-                            <span th:text="|재고 ${product.stockQuantity}개|">재고 0개</span>
+                            <span th:text="|재고 ${product.stockQuantity}개|">
+                                재고 0개
+                            </span>
+
                             <h3>
                                 <a class="catalog-product-name-link"
                                    th:href="@{/products/{id}(id=${product.id})}"
-                                   th:text="${product.name}">상품명</a>
+                                   th:text="${product.name}">
+                                    상품명
+                                </a>
                             </h3>
                         </div>
+
                         <strong th:text="|${#numbers.formatInteger(product.price, 0, 'COMMA')}원|">
                             0원
                         </strong>
@@ -80,8 +112,14 @@
                     <button type="button"
                             class="catalog-add-button add-product-button"
                             th:disabled="${product.stockQuantity == 0}"
-                            th:attr="data-id=${product.id},data-name=${product.name},data-price=${product.price},data-stock=${product.stockQuantity},data-image-url=${product.imageUrl}">
-                        <span th:text="${product.stockQuantity == 0 ? 'SOLD OUT' : 'ADD TO ORDER'}">
+                            th:attr="data-id=${product.id},
+                                     data-name=${product.name},
+                                     data-price=${product.price},
+                                     data-stock=${product.stockQuantity},
+                                     data-image-url=${product.imageUrl}">
+                        <span th:text="${product.stockQuantity == 0
+                            ? 'SOLD OUT'
+                            : 'ADD TO ORDER'}">
                             ADD TO ORDER
                         </span>
                     </button>
@@ -95,37 +133,57 @@
         class="drawer-backdrop"
         type="button"
         aria-label="주문창 닫기"
-        hidden></button>
+        hidden>
+</button>
 
 <aside id="order-drawer"
        class="order-drawer"
        aria-hidden="true"
        aria-labelledby="order-drawer-title">
+
     <div class="drawer-header">
         <div>
             <p>YOUR SELECTION</p>
             <h2 id="order-drawer-title">Order</h2>
         </div>
+
         <button id="cart-drawer-close"
                 class="drawer-close-button"
                 type="button"
-                aria-label="주문창 닫기">×</button>
+                aria-label="주문창 닫기">
+            ×
+        </button>
     </div>
 
     <div class="drawer-content">
-        <p id="cart-empty" class="empty-state compact">주문할 상품을 추가해 주세요.</p>
-        <div id="cart-list" class="cart-list"></div>
+        <p id="cart-empty"
+           class="empty-state compact">
+            주문할 상품을 추가해 주세요.
+        </p>
 
-        <form id="order-form" class="order-form drawer-order-form"
-              method="post" th:action="@{/order}">
+        <div id="cart-list"
+             class="cart-list">
+        </div>
+
+        <form id="order-form"
+              class="order-form drawer-order-form"
+              method="post"
+              th:action="@{/order}">
+
             <div id="order-item-inputs"></div>
 
             <label for="email">이메일</label>
-            <input id="email" name="email" type="email" maxlength="100" required>
+            <input id="email"
+                   name="email"
+                   type="email"
+                   maxlength="100"
+                   required>
 
             <label for="delivery-region">배송 지역</label>
-            <select id="delivery-region" class="delivery-region-select"
-                    disabled aria-disabled="true">
+            <select id="delivery-region"
+                    class="delivery-region-select"
+                    disabled
+                    aria-disabled="true">
                 <option value="" selected></option>
                 <option value="서울">서울특별시</option>
                 <option value="부산">부산광역시</option>
@@ -145,35 +203,63 @@
                 <option value="경남">경상남도</option>
                 <option value="제주">제주특별자치도</option>
             </select>
-            <input id="delivery-region-value" name="deliveryRegion" type="hidden">
+
+            <input id="delivery-region-value"
+                   name="deliveryRegion"
+                   type="hidden">
 
             <label for="postal-code">우편번호</label>
             <div class="address-search-row">
-                <input id="postal-code" name="postalCode" type="text" maxlength="20"
-                       placeholder="우편번호" readonly required>
-                <button id="address-search-button" type="button" class="secondary-button">
+                <input id="postal-code"
+                       name="postalCode"
+                       type="text"
+                       maxlength="20"
+                       placeholder="우편번호"
+                       readonly
+                       required>
+
+                <button id="address-search-button"
+                        type="button"
+                        class="secondary-button">
                     주소 찾기
                 </button>
             </div>
 
             <label for="road-address">도로명 주소</label>
-            <input id="road-address" type="text" placeholder="주소 찾기를 이용해 주세요"
-                   readonly required>
+            <input id="road-address"
+                   type="text"
+                   placeholder="주소 찾기를 이용해 주세요"
+                   readonly
+                   required>
 
             <label for="address-detail">상세 주소</label>
-            <input id="address-detail" type="text" maxlength="100"
+            <input id="address-detail"
+                   type="text"
+                   maxlength="100"
                    placeholder="상세 주소를 입력해 주세요">
-            <input id="combined-address" name="address" type="hidden">
 
-            <p class="delivery-notice">당일 오후 2시 이후 주문은 다음 배송 주기에 처리됩니다.</p>
+            <input id="combined-address"
+                   name="address"
+                   type="hidden">
+
+            <p class="delivery-notice">
+                당일 오후 2시 이후 주문은 다음 배송 주기에 처리됩니다.
+            </p>
 
             <div class="total-row">
                 <span>총금액</span>
                 <strong id="order-total">0원</strong>
             </div>
 
-            <p id="order-message" class="form-message" role="alert"></p>
-            <button id="checkout-button" type="submit" class="primary-button" disabled>
+            <p id="order-message"
+               class="form-message"
+               role="alert">
+            </p>
+
+            <button id="checkout-button"
+                    type="submit"
+                    class="primary-button"
+                    disabled>
                 결제하기
             </button>
         </form>

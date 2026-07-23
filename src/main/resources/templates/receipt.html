@@ -4,17 +4,25 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Compose Bean | 주문 영수증</title>
-    <link rel="stylesheet" th:href="@{/css/composebean.css(v=4)}">
+    <link rel="stylesheet" th:href="@{/css/composebean.css(v=13)}">
 </head>
+
 <body class="receipt-page-body">
 <header class="catalog-header receipt-site-header">
     <span aria-hidden="true"></span>
-    <a class="catalog-brand" th:href="@{/}" aria-label="Compose Bean 홈">
+
+    <a class="catalog-brand"
+       th:href="@{/}"
+       aria-label="Compose Bean 홈">
         <span>COMPOSE</span>
         <strong>BEAN</strong>
     </a>
+
     <div class="catalog-header-actions">
-        <a class="catalog-order-history-link" th:href="@{/orders}">주문조회</a>
+        <a class="catalog-order-history-link"
+           th:href="@{/orders}">
+            주문조회
+        </a>
     </div>
 </header>
 
@@ -22,46 +30,123 @@
     <article class="receipt-card">
         <div class="receipt-title-row">
             <h1>주문 영수증</h1>
-            <span class="status-badge"
-                  th:text="${order.paymentStatus.name() == 'PAID' ? '결제 완료' : order.paymentStatus}">
+
+            <span class="status-badge status-paid"
+                  th:text="${order.paymentStatus.name() == 'PAID'
+                      ? '결제 완료'
+                      : order.paymentStatus}">
                 결제 완료
             </span>
         </div>
 
-        <p class="order-number">주문번호 #<strong th:text="${order.id}">15</strong></p>
+        <p class="order-number">
+            주문번호
+            <strong th:text="|#${order.id}|">
+                #15
+            </strong>
+        </p>
+
         <hr>
 
         <dl class="receipt-info">
-            <dt>이메일</dt><dd th:text="${order.email}">customer@example.com</dd>
-            <dt>배송지</dt><dd th:text="${order.address}">서울특별시 강남구 테헤란로 123</dd>
-            <dt>우편번호</dt><dd th:text="${order.postalCode}">06234</dd>
-            <dt>주문 일자</dt><dd th:text="${#temporals.format(order.orderedAt, 'yyyy-MM-dd')}">2026-07-16</dd>
+            <dt>이메일</dt>
+            <dd th:text="${order.email}">
+                customer@example.com
+            </dd>
+
+            <dt>배송지</dt>
+            <dd th:text="${order.address}">
+                서울특별시 강남구 테헤란로 123
+            </dd>
+
+            <dt>우편번호</dt>
+            <dd th:text="${order.postalCode}">
+                06234
+            </dd>
+
+            <dt>주문 일자</dt>
+            <dd th:text="${#temporals.format(order.orderedAt, 'yyyy-MM-dd')}">
+                2026-07-16
+            </dd>
         </dl>
 
-        <h2>주문 상품</h2>
-        <div class="receipt-items">
-            <div class="receipt-item" th:each="item : ${order.items}">
-                <strong th:text="${item.productName}">상품명</strong>
-                <span th:text="|${item.quantity}개|">1개</span>
-                <span th:text="|${#numbers.formatInteger(item.unitPrice, 0, 'COMMA')}원|">0원</span>
-                <strong th:text="|${#numbers.formatInteger(item.subtotal, 0, 'COMMA')}원|">0원</strong>
+        <section class="receipt-product-section">
+            <div class="receipt-section-heading">
+                <h2>주문 상품</h2>
+
+                <span th:text="|총 ${#lists.size(order.items)}개 상품|">
+                    총 1개 상품
+                </span>
             </div>
-        </div>
+
+            <div class="receipt-items">
+                <div class="receipt-item receipt-item-header">
+                    <strong>상품명</strong>
+                    <span>수량</span>
+                    <span>단가</span>
+                    <strong>금액</strong>
+                </div>
+
+                <div class="receipt-item"
+                     th:each="item : ${order.items}">
+                    <strong th:text="${item.productName}">
+                        상품명
+                    </strong>
+
+                    <span th:text="|${item.quantity}개|">
+                        1개
+                    </span>
+
+                    <span th:text="|${#numbers.formatInteger(
+                        item.unitPrice,
+                        0,
+                        'COMMA'
+                    )}원|">
+                        0원
+                    </span>
+
+                    <strong th:text="|${#numbers.formatInteger(
+                        item.subtotal,
+                        0,
+                        'COMMA'
+                    )}원|">
+                        0원
+                    </strong>
+                </div>
+            </div>
+        </section>
 
         <div class="receipt-total-row">
             <strong>총 결제금액</strong>
-            <strong th:text="|${#numbers.formatInteger(order.totalPrice, 0, 'COMMA')}원|">0원</strong>
+
+            <strong th:text="|${#numbers.formatInteger(
+                order.totalPrice,
+                0,
+                'COMMA'
+            )}원|">
+                0원
+            </strong>
         </div>
 
         <div class="delivery-summary">
             <div>
                 <span>배송 예정일</span>
-                <strong th:text="${#temporals.format(order.deliveryExpectedDate, 'yyyy-MM-dd')}">
+
+                <strong th:text="${#temporals.format(
+                    order.deliveryExpectedDate,
+                    'yyyy-MM-dd'
+                )}">
                     2026-07-17
                 </strong>
             </div>
+
             <span class="status-badge"
-                  th:text="${order.deliveryStatus.name() == 'PREPARING' ? '배송 준비' : (order.deliveryStatus.name() == 'SHIPPING' ? '배송 중' : '배송 완료')}">
+                  th:classappend="|status-${#strings.toLowerCase(order.deliveryStatus.name())}|"
+                  th:text="${order.deliveryStatus.name() == 'PREPARING'
+                      ? '배송 준비'
+                      : (order.deliveryStatus.name() == 'SHIPPING'
+                          ? '배송 중'
+                          : '배송 완료')}">
                 배송 준비
             </span>
         </div>
