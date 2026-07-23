@@ -48,7 +48,7 @@ class ProductServiceTest {
                 .name("콜롬비아 원두")
                 .price(18000L)
                 .description("산미와 단맛이 균형 잡힌 원두")
-                .imageUrl("/images/products/colombia-beans.jpg")
+                .imageUrl("/uploads/products/colombia-beans.jpg")
                 .stockQuantity(100)
                 .build();
     }
@@ -257,13 +257,15 @@ class ProductServiceTest {
                 .isEqualTo("꽃향과 산미가 특징인 원두");
         assertThat(response.getImageUrl())
                 .isEqualTo(
-                        "/images/products/colombia-beans.jpg"
+                        "/uploads/products/colombia-beans.jpg"
                 );
         assertThat(response.getStockQuantity())
                 .isEqualTo(100);
 
         verify(imageStorageService, never())
                 .store(any());
+        verify(imageStorageService, never())
+                .delete(any());
         verify(productRepository)
                 .findByIdAndDeletedAtIsNull(1L);
         verify(productRepository).flush();
@@ -309,6 +311,42 @@ class ProductServiceTest {
                 );
 
         verify(imageStorageService).store(imageFile);
+        verify(imageStorageService)
+                .delete(
+                        "/uploads/products/colombia-beans.jpg"
+                );
+        verify(productRepository).flush();
+    }
+
+    @Test
+    @DisplayName("상품 이미지 삭제 요청 시 기존 이미지 파일을 삭제한다")
+    void updateProductWithImageDelete() {
+        ProductUpdateRequest request =
+                ProductUpdateRequest.builder()
+                        .name("콜롬비아 원두")
+                        .price(18000L)
+                        .description(
+                                "산미와 단맛이 균형 잡힌 원두"
+                        )
+                        .deleteImage(true)
+                        .build();
+
+        when(
+                productRepository
+                        .findByIdAndDeletedAtIsNull(1L)
+        ).thenReturn(Optional.of(product));
+
+        ProductResponse response =
+                productService.updateProduct(1L, request);
+
+        assertThat(response.getImageUrl()).isNull();
+
+        verify(imageStorageService, never())
+                .store(any());
+        verify(imageStorageService)
+                .delete(
+                        "/uploads/products/colombia-beans.jpg"
+                );
         verify(productRepository).flush();
     }
 
@@ -339,6 +377,8 @@ class ProductServiceTest {
         verify(productRepository, never()).flush();
         verify(imageStorageService, never())
                 .store(any());
+        verify(imageStorageService, never())
+                .delete(any());
     }
 
     @Test

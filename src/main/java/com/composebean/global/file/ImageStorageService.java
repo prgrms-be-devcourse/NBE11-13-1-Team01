@@ -114,4 +114,35 @@ public class ImageStorageService {
             );
         }
     }
+
+    public void delete(String imageUrl) {
+        if (imageUrl == null || imageUrl.isBlank()) {
+            return;
+        }
+
+        String prefix = "/uploads/products/";
+
+        if (!imageUrl.startsWith(prefix)) {
+            return;
+        }
+
+        String filename = imageUrl.substring(prefix.length());
+
+        if (filename.isBlank()) {
+            return;
+        }
+
+        Path targetPath = uploadPath.resolve(filename)
+                .normalize();
+
+        validateTargetPath(targetPath);
+
+        try {
+            Files.deleteIfExists(targetPath);
+        } catch (IOException exception) {
+            throw new BusinessException(
+                    ErrorCode.IMAGE_STORAGE_FAILED
+            );
+        }
+    }
 }

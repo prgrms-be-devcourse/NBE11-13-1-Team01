@@ -131,4 +131,53 @@ class ImageStorageServiceTest {
                 () -> imageStorageService.store(file)
         ).isInstanceOf(BusinessException.class);
     }
+
+    @Test
+    @DisplayName("저장된 이미지 파일을 삭제한다")
+    void deleteImage() {
+        ImageStorageService imageStorageService =
+                new ImageStorageService(tempDir.toString());
+
+        MockMultipartFile imageFile = new MockMultipartFile(
+                "imageFile",
+                "coffee.png",
+                "image/png",
+                "image-content".getBytes()
+        );
+
+        String imageUrl =
+                imageStorageService.store(imageFile);
+
+        String storedFilename = imageUrl.substring(
+                "/uploads/products/".length()
+        );
+
+        Path storedFile = tempDir.resolve(storedFilename);
+
+        imageStorageService.delete(imageUrl);
+
+        assertThat(Files.exists(storedFile)).isFalse();
+    }
+
+    @Test
+    @DisplayName("존재하지 않는 이미지 파일을 삭제해도 예외가 발생하지 않는다")
+    void deleteMissingImage() {
+        ImageStorageService imageStorageService =
+                new ImageStorageService(tempDir.toString());
+
+        imageStorageService.delete(
+                "/uploads/products/missing-image.png"
+        );
+    }
+
+    @Test
+    @DisplayName("업로드 경로가 아닌 이미지 URL은 삭제하지 않는다")
+    void ignoreExternalImageUrl() {
+        ImageStorageService imageStorageService =
+                new ImageStorageService(tempDir.toString());
+
+        imageStorageService.delete(
+                "https://example.com/image.png"
+        );
+    }
 }
