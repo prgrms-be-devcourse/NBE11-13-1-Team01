@@ -43,7 +43,8 @@ class OrderCreatedEventListenerTest {
                 .contains("Compose Bean 새 주문 접수")
                 .contains("customer@example.com")
                 .contains("Colombia Narino")
-                .contains("10,000원");
+                .contains("10,000원")
+                .contains("http://localhost:8080/admin/orders");
     }
 
     @Test

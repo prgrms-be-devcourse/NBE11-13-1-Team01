@@ -16,6 +16,10 @@ import java.util.stream.Collectors;
 public class OrderCreatedEventListener {
 
     private final SlackClient slackClient;
+
+    private static final String ADMIN_ORDER_URL =
+            "http://localhost:8080/admin/orders";
+
     private static final DateTimeFormatter ORDER_TIME_FORMATTER =
             DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
 
@@ -59,6 +63,7 @@ public class OrderCreatedEventListener {
 
                 총 주문 금액: %,d원
                 주문 시각: %s
+                주문 확인: %s
                 """.formatted(
                 event.orderId(),
                 event.email(),
@@ -66,7 +71,8 @@ public class OrderCreatedEventListener {
                 event.postalCode(),
                 itemLines,
                 event.totalPrice(),
-                event.orderedAt().format(ORDER_TIME_FORMATTER)
+                event.orderedAt().format(ORDER_TIME_FORMATTER),
+                ADMIN_ORDER_URL
         );
     }
 }
