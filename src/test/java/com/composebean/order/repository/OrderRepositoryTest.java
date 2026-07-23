@@ -15,7 +15,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
-import org.springframework.boot.jdbc.test.autoconfigure.AutoConfigureTestDatabase;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -29,7 +28,6 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @DataJpaTest
-@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE) //h2 말고 mysql이용
 @Import(QueryDSLConfig.class) // queryDSL을 이용한 테스트를 할려면 필수
 class OrderRepositoryTest {
 
@@ -185,8 +183,10 @@ class OrderRepositoryTest {
 
         //when
         Pageable pageable = PageRequest.of(0, size);
-        Page<OrderSummaryResponse> orderSummaryResponsePage = orderRepository.getOrders("test@naver.com", pageable);
-        List<OrderSummaryResponse> orders = orderSummaryResponsePage.getContent();
+        Page<OrderSummaryResponse> orderSummaryResponsePage =
+                orderRepository.getOrders("test@naver.com", pageable);
+        List<OrderSummaryResponse> orders =
+                orderSummaryResponsePage.getContent();
 
         //then
         //페이지가 있음
@@ -194,8 +194,9 @@ class OrderRepositoryTest {
         assertThat(orderSummaryResponsePage.getTotalElements()).isEqualTo(2); //총 데이터 갯수?
 
         // 값 검증
-        assertThat(orders.get(0).getTotalPrice()).isEqualTo(5700L);
-
+        assertThat(orders)
+                .extracting(OrderSummaryResponse::getTotalPrice)
+                .containsExactlyInAnyOrder(3900L, 5700L);
     }
 
 }

@@ -16,4 +16,6 @@ public interface OrderRepository extends JpaRepository<Order, Long>, OrderReposi
     List<Order> findByOrderedAtBetweenAndPaymentStatus(LocalDateTime start, LocalDateTime end, PaymentStatus paymentStatus);
 
     List<Order> findAllByDeletedAtIsNull();
+
+    Optional<Order> findByIdAndDeletedAtIsNull(Long id);
 }

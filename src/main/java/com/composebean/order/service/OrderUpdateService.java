@@ -5,6 +5,7 @@ import com.composebean.global.exception.ErrorCode;
 import com.composebean.order.domain.Order;
 import com.composebean.order.dto.DeliveryStatusUpdateRequest;
 import com.composebean.order.dto.OrderDetailResponse;
+import com.composebean.order.exception.OrderNotFoundException;
 import com.composebean.order.repository.OrderRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -21,10 +22,9 @@ public class OrderUpdateService {
             DeliveryStatusUpdateRequest dto,
             Long orderId
     ) {
-        Order order = orderRepository.findById(orderId)
-                .orElseThrow(() ->
-                        new BusinessException(ErrorCode.ORDER_NOT_FOUND)
-                );
+        Order order = orderRepository
+                .findByIdAndDeletedAtIsNull(orderId)
+                .orElseThrow(OrderNotFoundException::new);
 
         order.updateDeliveryStatus(dto.getDeliveryStatus());
 

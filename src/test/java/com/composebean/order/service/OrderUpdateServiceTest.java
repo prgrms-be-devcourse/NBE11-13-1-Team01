@@ -71,6 +71,45 @@ class OrderUpdateServiceTest {
                 .isEqualTo(DeliveryStatus.DELIVERED);
     }
 
+    @Test
+    @DisplayName("존재하지 않는 주문의 배송 상태를 수정하면 예외가 발생한다")
+    void 주문이_없으면_예외가_발생한다() {
+        DeliveryStatusUpdateRequest request =
+                new DeliveryStatusUpdateRequest(DeliveryStatus.DELIVERED);
+
+        assertThatThrownBy(() ->
+                orderUpdateService.updateDeliveryStatus(request, Long.MAX_VALUE)
+        ).isInstanceOfSatisfying(
+                BusinessException.class,
+                exception -> assertThat(exception.getErrorCode())
+                        .isEqualTo(ErrorCode.ORDER_NOT_FOUND)
+        );
+    }
+
+    @Test
+    @DisplayName("소프트 딜리트된 주문의 배송 상태를 수정하면 예외가 발생한다")
+    void 삭제된_주문의_배송_상태는_수정할_수_없다() {
+        Order deletedOrder = orderRepository.findById(orderId)
+                .orElseThrow();
+
+        deletedOrder.delete();
+        orderRepository.flush();
+
+        DeliveryStatusUpdateRequest request =
+                new DeliveryStatusUpdateRequest(DeliveryStatus.DELIVERED);
+
+        assertThatThrownBy(() ->
+                orderUpdateService.updateDeliveryStatus(request, orderId)
+        ).isInstanceOfSatisfying(
+                BusinessException.class,
+                exception -> assertThat(exception.getErrorCode())
+                        .isEqualTo(ErrorCode.ORDER_NOT_FOUND)
+        );
+
+        assertThat(deletedOrder.getDeliveryStatus())
+                .isEqualTo(DeliveryStatus.PREPARING);
+    }
+
     // 테스트용 헬퍼 메서드
     private Order createOrder(String email, String address) {
         Order order = Order.builder()
@@ -86,30 +125,19 @@ class OrderUpdateServiceTest {
         return order;
     }
 
-    private OrderItem createOrderItem(Order order, Product product, int quantity) {
+    private OrderItem createOrderItem(
+            Order order,
+            Product product,
+            int quantity
+    ) {
         OrderItem item = OrderItem.builder()
                 .product(product)
                 .quantity(quantity)
                 .unitPrice(product.getPrice())
-                .subtotal(product.getPrice()*quantity)
+                .subtotal(product.getPrice() * quantity)
                 .order(order)
                 .build();
 
         return item;
-    }
-
-    @Test
-    @DisplayName("존재하지 않는 주문의 배송 상태를 수정하면 예외가 발생한다")
-    void 주문이_없으면_예외가_발생한다() {
-        DeliveryStatusUpdateRequest request =
-                new DeliveryStatusUpdateRequest(DeliveryStatus.DELIVERED);
-
-        assertThatThrownBy(() ->
-                orderUpdateService.updateDeliveryStatus(request, Long.MAX_VALUE)
-        ).isInstanceOfSatisfying(
-                BusinessException.class,
-                exception -> assertThat(exception.getErrorCode())
-                        .isEqualTo(ErrorCode.ORDER_NOT_FOUND)
-        );
     }
 }

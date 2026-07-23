@@ -9,6 +9,8 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.HandlerMethodValidationException;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -113,6 +115,39 @@ public class GlobalExceptionHandler {
     ) {
         ErrorResponse response = ErrorResponse.from(
                 ErrorCode.INVALID_REQUEST
+        );
+
+        return ResponseEntity
+                .status(ErrorCode.INVALID_REQUEST.getStatus())
+                .body(response);
+    }
+
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public ResponseEntity<ErrorResponse> handleMaxUploadSizeExceededException(
+            MaxUploadSizeExceededException exception
+    ) {
+        ErrorResponse response = ErrorResponse.from(
+                ErrorCode.IMAGE_FILE_TOO_LARGE
+        );
+
+        return ResponseEntity
+                .status(ErrorCode.IMAGE_FILE_TOO_LARGE.getStatus())
+                .body(response);
+    }
+
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<ErrorResponse> handleMethodArgumentTypeMismatchException(
+            MethodArgumentTypeMismatchException exception
+    ) {
+        Map<String, String> errors = new LinkedHashMap<>();
+        errors.put(
+                exception.getName(),
+                "요청값의 형식이 올바르지 않습니다."
+        );
+
+        ErrorResponse response = ErrorResponse.of(
+                ErrorCode.INVALID_REQUEST,
+                errors
         );
 
         return ResponseEntity
