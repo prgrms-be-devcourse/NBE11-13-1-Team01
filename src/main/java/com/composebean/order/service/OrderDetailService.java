@@ -16,7 +16,8 @@ public class OrderDetailService {
 
     @Transactional(readOnly = true)
     public OrderDetailResponse getOrder(Long orderId) {
-        Order order = orderRepository.findById(orderId)
+        Order order = orderRepository
+                .findByIdAndDeletedAtIsNull(orderId)
                 .orElseThrow(OrderNotFoundException::new);
 
         return OrderDetailResponse.from(order);

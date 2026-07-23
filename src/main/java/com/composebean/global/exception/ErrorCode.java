@@ -63,6 +63,12 @@ public enum ErrorCode {
             HttpStatus.INTERNAL_SERVER_ERROR,
             "IMAGE_STORAGE_FAILED",
             "이미지 파일 저장에 실패했습니다."
+    ),
+
+    IMAGE_FILE_TOO_LARGE(
+            HttpStatus.PAYLOAD_TOO_LARGE,
+            "IMAGE_FILE_TOO_LARGE",
+            "업로드 가능한 이미지 크기를 초과했습니다."
     );
 
     private final HttpStatus status;

@@ -6,7 +6,6 @@ import com.composebean.order.domain.*;
 import com.composebean.order.repository.OrderItemRepository;
 import com.composebean.order.repository.OrderRepository;
 import lombok.RequiredArgsConstructor;
-import org.aspectj.weaver.ast.Or;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,9 +20,6 @@ import java.util.stream.Collectors;
 public class OrderBatchService {
 
     private final OrderRepository orderRepository;
-    private final OrderItemRepository orderItemRepository;
-    private final DeliveryStatus shipping = DeliveryStatus.SHIPPING;
-    private final PaymentStatus paymentStatus = PaymentStatus.PAID;
 
     @Transactional
     public void autoGroupOrders() {
@@ -44,48 +40,37 @@ public class OrderBatchService {
         });
     }
 
-    //그룹을 하나의 데이터로,
     private void processGroup(List<Order> orderList) {
-        if (orderList == null) {
+        if (orderList == null || orderList.isEmpty()) {
             return;
         }
 
-        // 1. 대표 주문 선정 (첫 번째 주문을 대표로 사용)
         Order representativeOrder = orderList.get(orderList.size() - 1);
         Order newOrder = copyOrder(representativeOrder);
-        representativeOrder.delete();
 
-        // 2. 나머지 주문(index 1부터)의 아이템들을 대표 주문으로 이동
-        for (int i = 0; i < orderList.size() - 1; i++) {
-            Order otherOrder = orderList.get(i);
-            otherOrder.delete();
+        try {
+            for (Order order : orderList) {
+                order.delete();
 
-            //기존 아이템 옮기기
-            List<OrderItem> itemsToMove = new ArrayList<>(otherOrder.getOrderItems());
-            try {
+                List<OrderItem> itemsToMove =
+                        new ArrayList<>(order.getOrderItems());
 
                 for (OrderItem item : itemsToMove) {
                     newOrder.addOrderItem(item);
                 }
-            } catch (Exception e) {
-                throw new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR);
             }
-
+        } catch (Exception e) {
+            throw new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR);
         }
 
-        // 3. totalPrice 재계산
         long newTotal = newOrder.getOrderItems().stream()
                 .mapToLong(OrderItem::getSubtotal)
                 .sum();
+
         newOrder.updateTotalPrice(newTotal);
+        newOrder.updatePaymentStatus(PaymentStatus.PAID);
+        newOrder.updateDeliveryStatus(DeliveryStatus.SHIPPING);
 
-        // paymentStatus 업데이트
-        newOrder.updatePaymentStatus(paymentStatus);
-
-        // deliveryStatus 업데이트
-        newOrder.updateDeliveryStatus(shipping);
-
-        //새로운 주문 처리
         orderRepository.save(newOrder);
     }
 

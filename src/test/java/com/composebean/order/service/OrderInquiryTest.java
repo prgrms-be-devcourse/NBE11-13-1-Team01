@@ -4,10 +4,12 @@ import com.composebean.order.domain.DeliveryStatus;
 import com.composebean.order.domain.Order;
 import com.composebean.order.domain.OrderItem;
 import com.composebean.order.domain.PaymentStatus;
+import com.composebean.order.repository.OrderItemRepository;
 import com.composebean.order.repository.OrderRepository;
 import com.composebean.product.domain.Product;
 import com.composebean.product.repository.ProductRepository;
-import lombok.extern.slf4j.Slf4j;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -17,89 +19,120 @@ import java.time.LocalDateTime;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@Slf4j
 @SpringBootTest
 @Transactional
-public class OrderInquiryTest {
+class OrderInquiryTest {
 
     @Autowired
     private OrderBatchService orderBatchService;
 
     @Autowired
-    private OrderInquiryService orderInquiryService;
+    private OrderRepository orderRepository;
 
     @Autowired
-    private OrderRepository orderRepository;
+    private OrderItemRepository orderItemRepository;
 
     @Autowired
     private ProductRepository productRepository;
 
+    @BeforeEach
+    void setUp() {
+        orderItemRepository.deleteAll();
+        orderRepository.deleteAll();
+        productRepository.deleteAll();
+
+        orderItemRepository.flush();
+        orderRepository.flush();
+        productRepository.flush();
+    }
+
     @Test
-    void 소프트_딜리트시_안보이는지_확인() {
-        // 1. Given: 상품 생성
-        Product product = new Product("사과", 1000L, null, null, 345); // 가격 1000원
+    @DisplayName("배치 처리된 원본 주문은 활성 주문 조회에서 제외된다")
+    void excludeSoftDeletedOrderFromActiveOrders() {
+        Product product = Product.builder()
+                .name("사과")
+                .price(1000L)
+                .description("사과 상품")
+                .imageUrl(null)
+                .stockQuantity(345)
+                .build();
+
         productRepository.save(product);
 
-        // 주문 2개 생성 (같은 이메일, 주소)
-        Order order1 = createOrder("user@test.com", "경기");
-        order1.addOrderItem(createOrderItem(order1, product, 1)); // 1개 (subtotal: 1000)
+        Order pendingOrder = createPendingOrder(
+                "user@test.com",
+                "경기도 성남시"
+        );
+        pendingOrder.addOrderItem(createOrderItem(product, 1));
 
-        Order order2 = createOrder2("user@test.com", "경기");
-        order2.addOrderItem(createOrderItem(order2, product, 2)); // 2개 (subtotal: 2000)
+        Order paidOrder = createPaidOrder(
+                "user@test.com",
+                "경기도 성남시"
+        );
+        paidOrder.addOrderItem(createOrderItem(product, 2));
 
+        orderRepository.save(pendingOrder);
+        orderRepository.save(paidOrder);
 
-        orderRepository.save(order1);
-        orderRepository.save(order2);
-
-        // 2. When: 배치 실행
         orderBatchService.autoGroupOrders();
 
-        assertThat(orderRepository.findAllByDeletedAtIsNull().size()).isEqualTo(3);
+        assertThat(orderRepository.findAllByDeletedAtIsNull())
+                .hasSize(2);
 
-        assertThat(order2.getDeletedAt()).isNotNull();
-
-        assertThat(order1.getDeletedAt()).isNull();
+        assertThat(paidOrder.getDeletedAt()).isNotNull();
+        assertThat(pendingOrder.getDeletedAt()).isNull();
     }
 
-
-    // 테스트용 헬퍼 메서드
-    private Order createOrder(String email, String address) {
-        Order order = Order.builder()
+    private Order createPendingOrder(
+            String email,
+            String address
+    ) {
+        return Order.builder()
                 .email(email)
                 .address(address)
-                .postalCode("234-323")
-                .totalPrice(33434L)
+                .postalCode("12345")
+                .totalPrice(1000L)
                 .paymentStatus(PaymentStatus.PENDING)
                 .deliveryStatus(DeliveryStatus.PREPARING)
-                .deliveryExpectedDate(LocalDateTime.now())
-                .orderedAt(LocalDateTime.of(2026,1,1,1,1))
+                .deliveryExpectedDate(LocalDateTime.now().plusDays(1))
+                .orderedAt(batchTargetTime())
                 .build();
-        return order;
     }
 
-    private Order createOrder2(String email, String address) {
-        Order order = Order.builder()
+    private Order createPaidOrder(
+            String email,
+            String address
+    ) {
+        return Order.builder()
                 .email(email)
                 .address(address)
-                .postalCode("234-323")
-                .totalPrice(33434L)
+                .postalCode("12345")
+                .totalPrice(2000L)
                 .paymentStatus(PaymentStatus.PAID)
                 .deliveryStatus(DeliveryStatus.PREPARING)
-                .deliveryExpectedDate(LocalDateTime.now())
-                .orderedAt(LocalDateTime.of(2026,7,21,17,1))
+                .deliveryExpectedDate(LocalDateTime.now().plusDays(1))
+                .orderedAt(batchTargetTime())
                 .build();
-        return order;
     }
 
-    private OrderItem createOrderItem(Order order, Product product, int quantity) {
-        OrderItem item = OrderItem.builder()
+    private OrderItem createOrderItem(
+            Product product,
+            int quantity
+    ) {
+        return OrderItem.builder()
                 .product(product)
                 .quantity(quantity)
                 .unitPrice(product.getPrice())
-                .subtotal(product.getPrice()*quantity)
-                .order(order)
+                .subtotal(product.getPrice() * quantity)
                 .build();
+    }
 
-        return item;
+    private LocalDateTime batchTargetTime() {
+        return LocalDateTime.now()
+                .minusDays(1)
+                .withHour(15)
+                .withMinute(0)
+                .withSecond(0)
+                .withNano(0);
     }
 }
