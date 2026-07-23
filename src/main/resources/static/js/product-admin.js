@@ -10,6 +10,8 @@ const currentImageArea = document.querySelector("#current-image-area");
 const currentProductImage = document.querySelector("#current-product-image");
 const deleteProductImage = document.querySelector("#delete-product-image");
 
+let editingProductId = null;
+
 function resetCurrentImage() {
     productImageFile.value = "";
     deleteProductImage.checked = false;
@@ -20,6 +22,7 @@ function resetCurrentImage() {
 function resetProductForm() {
     productForm.reset();
     resetCurrentImage();
+    editingProductId = null;
 
     productForm.action = "/admin/products";
     productFormTitle.textContent = "상품 등록";
@@ -32,29 +35,22 @@ function resetProductForm() {
 document.querySelectorAll(".edit-product-button").forEach(button => {
     button.addEventListener("click", () => {
         resetCurrentImage();
+        editingProductId = Number(button.dataset.id);
 
         document.querySelector("#product-name").value =
             button.dataset.name || "";
-
         document.querySelector("#product-description").value =
             button.dataset.description || "";
-
         document.querySelector("#product-price").value =
-            button.dataset.price || "";
+            button.dataset.price;
+        productStock.value = button.dataset.stock;
 
-        productStock.value =
-            button.dataset.stock || "";
-
-        const imageUrl = button.dataset.imageUrl;
-
-        if (imageUrl) {
-            currentProductImage.src = imageUrl;
+        if (button.dataset.imageUrl) {
+            currentProductImage.src = button.dataset.imageUrl;
             currentImageArea.hidden = false;
         }
 
-        productForm.action =
-            `/admin/products/${button.dataset.id}`;
-
+        productForm.action = `/admin/products/${editingProductId}`;
         productFormTitle.textContent = "상품 수정";
         productSubmit.textContent = "수정하기";
         initialStockField.hidden = false;
@@ -77,6 +73,39 @@ productImageFile.addEventListener("change", () => {
 deleteProductImage.addEventListener("change", () => {
     if (deleteProductImage.checked) {
         productImageFile.value = "";
+    }
+});
+
+productForm.addEventListener("submit", async event => {
+    if (editingProductId === null) {
+        return;
+    }
+
+    event.preventDefault();
+    productSubmit.disabled = true;
+
+    try {
+        const response = await fetch(
+            `/api/products/${editingProductId}/stock`,
+            {
+                method: "PATCH",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    stockQuantity: Number(productStock.value)
+                })
+            }
+        );
+
+        if (!response.ok) {
+            throw new Error("상품 재고 수정에 실패했습니다.");
+        }
+
+        productForm.submit();
+    } catch (error) {
+        alert(error.message);
+        productSubmit.disabled = false;
     }
 });
 

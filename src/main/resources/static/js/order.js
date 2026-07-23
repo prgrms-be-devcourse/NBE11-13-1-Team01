@@ -13,8 +13,39 @@ const roadAddress = document.querySelector("#road-address");
 const addressDetail = document.querySelector("#address-detail");
 const combinedAddress = document.querySelector("#combined-address");
 const addressSearchButton = document.querySelector("#address-search-button");
+const cartDrawer = document.querySelector("#order-drawer");
+const cartDrawerToggle = document.querySelector("#cart-drawer-toggle");
+const cartDrawerClose = document.querySelector("#cart-drawer-close");
+const drawerBackdrop = document.querySelector("#drawer-backdrop");
+const drawerCartCount = document.querySelector("#drawer-cart-count");
 
 let roadAddressWithoutRegion = "";
+
+function openCartDrawer() {
+    cartDrawer.classList.add("open");
+    drawerBackdrop.hidden = false;
+    document.body.classList.add("drawer-open");
+    cartDrawer.setAttribute("aria-hidden", "false");
+    cartDrawerToggle.setAttribute("aria-expanded", "true");
+}
+
+function closeCartDrawer() {
+    cartDrawer.classList.remove("open");
+    drawerBackdrop.hidden = true;
+    document.body.classList.remove("drawer-open");
+    cartDrawer.setAttribute("aria-hidden", "true");
+    cartDrawerToggle.setAttribute("aria-expanded", "false");
+}
+
+cartDrawerToggle.addEventListener("click", openCartDrawer);
+cartDrawerClose.addEventListener("click", closeCartDrawer);
+drawerBackdrop.addEventListener("click", closeCartDrawer);
+
+document.addEventListener("keydown", event => {
+    if (event.key === "Escape") {
+        closeCartDrawer();
+    }
+});
 
 const deliveryRegionValues = {
     "서울": "서울",
@@ -68,6 +99,7 @@ document.querySelectorAll(".add-product-button").forEach(button => {
             name: button.dataset.name,
             price: Number(button.dataset.price),
             stock: Number(button.dataset.stock),
+            imageUrl: button.dataset.imageUrl || "",
             quantity: saved ? saved.quantity + 1 : 1
         });
 
@@ -102,7 +134,14 @@ function renderCart() {
         const row = document.createElement("div");
         row.className = "cart-item";
         row.innerHTML = `
-            <strong>${item.name}</strong>
+            <div class="cart-product-summary">
+                <div class="cart-product-image">
+                    ${item.imageUrl
+                        ? `<img src="${item.imageUrl}" alt="${item.name}">`
+                        : "<span>이미지</span>"}
+                </div>
+                <strong>${item.name}</strong>
+            </div>
             <div class="cart-controls">
                 <button type="button" data-action="minus">−</button>
                 <span>${item.quantity}개</span>
@@ -128,6 +167,8 @@ function renderCart() {
     cartEmpty.hidden = cart.size > 0;
     checkoutButton.disabled = cart.size === 0;
     orderTotal.textContent = `${total.toLocaleString("ko-KR")}원`;
+    drawerCartCount.textContent = Array.from(cart.values())
+        .reduce((sum, item) => sum + item.quantity, 0);
 }
 
 function updateCombinedAddress() {

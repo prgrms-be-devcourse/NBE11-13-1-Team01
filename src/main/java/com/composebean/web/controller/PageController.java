@@ -43,6 +43,11 @@ public class PageController {
         return "order";
     }
 
+    @GetMapping("/products/{productId}")
+    public String productDetailPage() {
+        return "product-detail";
+    }
+
     @PostMapping("/order")
     public String createOrder(
             @ModelAttribute OrderForm orderForm
@@ -153,18 +158,6 @@ public class PageController {
                         .build();
 
         productService.updateProduct(productId, request);
-
-        ProductStockUpdateRequest stockRequest =
-                ProductStockUpdateRequest.builder()
-                        .stockQuantity(
-                                productForm.getStockQuantity()
-                        )
-                        .build();
-
-        productService.updateStock(
-                productId,
-                stockRequest
-        );
 
         return "redirect:/admin/products";
     }
