@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>상품 상세 | COMPOSED BEAN</title>
+    <link rel="stylesheet" th:href="@{/css/composebean.css(v=8)}">
+</head>
+<body>
+<header class="catalog-header">
+    <span></span>
+    <a class="catalog-brand" th:href="@{/}">
+        <span>COMPOSED</span>
+        <strong>BEAN</strong>
+    </a>
+    <div class="catalog-header-actions">
+        <a class="catalog-order-history-link" th:href="@{/orders}">주문조회</a>
+    </div>
+</header>
+
+<main class="product-detail-page">
+    <p id="product-detail-message" class="product-detail-message">
+        상품 정보를 불러오는 중입니다.
+    </p>
+
+    <article id="product-detail" class="product-detail-card" hidden>
+        <div class="product-detail-image-area">
+            <img id="product-detail-image" alt="" hidden>
+            <div id="product-detail-placeholder" class="product-detail-placeholder">
+                COMPOSED BEAN
+            </div>
+        </div>
+
+        <div class="product-detail-content">
+            <p class="eyebrow">COMPOSED BEAN COLLECTION</p>
+            <h1 id="product-detail-name"></h1>
+            <p id="product-detail-description" class="product-detail-description"></p>
+
+            <dl class="product-detail-info">
+                <div>
+                    <dt>가격</dt>
+                    <dd id="product-detail-price"></dd>
+                </div>
+                <div>
+                    <dt>남은 재고</dt>
+                    <dd id="product-detail-stock"></dd>
+                </div>
+            </dl>
+
+            <a class="product-detail-back" th:href="@{/}">상품 목록으로 돌아가기</a>
+        </div>
+    </article>
+</main>
+
+<script th:src="@{/js/product-detail.js(v=1)}"></script>
+</body>
+</html>

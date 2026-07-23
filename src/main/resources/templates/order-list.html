@@ -3,26 +3,42 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title th:text="${adminMode} ? 'Compose Bean | 주문 관리' : 'Compose Bean | 주문 조회'">Compose Bean | 주문 조회</title>
-    <link rel="stylesheet" th:href="@{/css/composebean.css}">
+    <title th:text="${adminMode} ? 'Compose Bean | 주문 관리' : 'Compose Bean | 주문 조회'">
+        Compose Bean | 주문 조회
+    </title>
+    <link rel="stylesheet" th:href="@{/css/composebean.css(v=5)}">
 </head>
-<body>
-<div class="page-shell order-list-page">
-    <header class="site-header">
-        <a class="header-icon" th:href="@{/}" aria-label="홈">⌂</a>
-        <h1 class="page-title" th:text="${adminMode} ? '주문 관리' : '주문 조회'">주문 조회</h1>
-        <a class="header-icon" th:href="@{/orders}" aria-label="주문 조회">▧</a>
-    </header>
+<body class="order-list-body">
+<header class="catalog-header order-list-site-header">
+    <span aria-hidden="true"></span>
+    <a class="catalog-brand" th:href="@{/}" aria-label="Compose Bean 홈">
+        <span>COMPOSED</span>
+        <strong>BEAN</strong>
+    </a>
+    <div class="catalog-header-actions">
+        <a class="catalog-order-history-link"
+           th:href="${adminMode} ? @{/admin/orders} : @{/orders}"
+           th:text="${adminMode} ? '주문관리' : '주문조회'">
+            주문조회
+        </a>
+    </div>
+</header>
 
-    <main>
-        <form class="wide-search" method="get"
+<main class="order-list-background">
+    <div class="order-list-content">
+        <form class="wide-search order-list-search"
+              method="get"
               th:action="${adminMode} ? @{/admin/orders} : @{/orders}">
-            <input name="email" type="email" placeholder="이메일로 내 주문 찾기" th:value="${email}">
-            <button type="submit" class="dark-button">⌕ 검색</button>
+            <input name="email"
+                   type="email"
+                   placeholder="이메일로 내 주문 찾기"
+                   th:value="${email}">
+            <button type="submit" class="dark-button">검색</button>
         </form>
 
-        <p class="inline-message" th:if="${#lists.isEmpty(orders)}">
-            주문 조회 기능이 연결되면 이곳에 주문 목록이 표시됩니다.
+        <p class="inline-message order-list-empty"
+           th:if="${#lists.isEmpty(orders)}">
+            조회된 주문이 없습니다.
         </p>
 
         <section class="order-grid">
@@ -35,30 +51,51 @@
                     <select class="status-badge delivery-status-select"
                             th:if="${adminMode}"
                             th:attr="data-order-id=${order.id},aria-label=|주문 ${order.id} 배송 상태 변경|">
-                        <option value="PREPARING" th:selected="${order.deliveryStatus.name() == 'PREPARING'}">배송 준비</option>
-                        <option value="SHIPPING" th:selected="${order.deliveryStatus.name() == 'SHIPPING'}">배송 중</option>
-                        <option value="DELIVERED" th:selected="${order.deliveryStatus.name() == 'DELIVERED'}">배송 완료</option>
+                        <option value="PREPARING"
+                                th:selected="${order.deliveryStatus.name() == 'PREPARING'}">
+                            배송 준비
+                        </option>
+                        <option value="SHIPPING"
+                                th:selected="${order.deliveryStatus.name() == 'SHIPPING'}">
+                            배송 중
+                        </option>
+                        <option value="DELIVERED"
+                                th:selected="${order.deliveryStatus.name() == 'DELIVERED'}">
+                            배송 완료
+                        </option>
                     </select>
 
-                    <span class="status-badge" th:unless="${adminMode}"
+                    <span class="status-badge"
+                          th:unless="${adminMode}"
                           th:text="${order.deliveryStatus.name() == 'PREPARING' ? '배송 준비' : (order.deliveryStatus.name() == 'SHIPPING' ? '배송 중' : '배송 완료')}">
                         배송 중
                     </span>
                 </div>
 
                 <a class="order-card-link" th:href="@{/receipt/{id}(id=${order.id})}">
-                    <time th:text="${#temporals.format(order.orderedAt, 'yyyy-MM-dd')}">2026-07-16</time>
+                    <time th:text="${#temporals.format(order.orderedAt, 'yyyy-MM-dd')}">
+                        2026-07-16
+                    </time>
                     <dl>
-                        <dt>주문자</dt><dd th:text="${order.email}">customer@example.com</dd>
-                        <dt>배송 예정일</dt><dd th:text="${#temporals.format(order.deliveryExpectedDate, 'yyyy-MM-dd')}">2026-07-17</dd>
-                        <dt>결제 상태</dt><dd th:text="${order.paymentStatus}">완료</dd>
-                        <dt>총금액</dt><dd th:text="|${#numbers.formatInteger(order.totalPrice, 0, 'COMMA')}원|">0원</dd>
+                        <dt>주문자</dt>
+                        <dd th:text="${order.email}">customer@example.com</dd>
+                        <dt>배송 예정일</dt>
+                        <dd th:text="${#temporals.format(order.deliveryExpectedDate, 'yyyy-MM-dd')}">
+                            2026-07-17
+                        </dd>
+                        <dt>결제 상태</dt>
+                        <dd th:text="${order.paymentStatus}">완료</dd>
+                        <dt>총금액</dt>
+                        <dd th:text="|${#numbers.formatInteger(order.totalPrice, 0, 'COMMA')}원|">
+                            0원
+                        </dd>
                     </dl>
                 </a>
             </article>
         </section>
-    </main>
-</div>
+    </div>
+</main>
+
 <script th:if="${adminMode}" th:src="@{/js/order-admin.js}"></script>
 </body>
 </html>

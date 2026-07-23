@@ -4,17 +4,24 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Compose Bean | 상품 관리</title>
-    <link rel="stylesheet" th:href="@{/css/composebean.css}">
+    <link rel="stylesheet" th:href="@{/css/composebean.css(v=6)}">
 </head>
-<body>
-<div class="page-shell">
-    <header class="site-header">
-        <a class="header-icon" th:href="@{/}" aria-label="홈">⌂</a>
-        <a class="brand" th:href="@{/}">Composed Bean</a>
-        <a class="header-icon" th:href="@{/admin/orders}" aria-label="주문 관리">▧</a>
-    </header>
+<body class="product-admin-body">
+<header class="catalog-header product-admin-site-header">
+    <span aria-hidden="true"></span>
+    <a class="catalog-brand" th:href="@{/}" aria-label="Compose Bean 홈">
+        <span>COMPOSED</span>
+        <strong>BEAN</strong>
+    </a>
+    <div class="catalog-header-actions">
+        <a class="catalog-order-history-link" th:href="@{/admin/orders}">
+            주문관리
+        </a>
+    </div>
+</header>
 
-    <main class="admin-layout">
+<main class="product-admin-background">
+    <div class="admin-layout product-admin-layout">
         <section class="admin-list-section">
             <h1>상품 관리</h1>
 
@@ -23,17 +30,17 @@
                 등록된 상품이 없습니다.
             </p>
 
-            <div class="admin-product-list">
-                <article class="admin-product-row"
+            <div class="admin-product-list admin-product-grid">
+                <article class="admin-product-row admin-product-card"
                          th:each="product : ${products}">
 
-                    <div class="product-image small">
+                    <div class="product-image admin-card-image">
                         <img th:if="${product.imageUrl != null and !product.imageUrl.isBlank()}"
                              th:src="${product.imageUrl}"
                              th:alt="${product.name}">
 
                         <span th:unless="${product.imageUrl != null and !product.imageUrl.isBlank()}">
-                            이미지
+                            COMPOSED BEAN
                         </span>
                     </div>
 
@@ -47,33 +54,35 @@
                         </strong>
                     </div>
 
-                    <span th:text="|${#numbers.formatInteger(product.price, 0, 'COMMA')}원|">
-                        0원
-                    </span>
+                    <div class="admin-product-meta">
+                        <strong th:text="|${#numbers.formatInteger(product.price, 0, 'COMMA')}원|">
+                            0원
+                        </strong>
+                        <span th:text="|재고 ${product.stockQuantity}개|">
+                            재고 0개
+                        </span>
+                    </div>
 
-                    <span th:text="|${product.stockQuantity}개|">
-                        0개
-                    </span>
-
-                    <button type="button"
-                            class="secondary-button edit-product-button"
-                            th:attr="
-                                data-id=${product.id},
-                                data-name=${product.name},
-                                data-description=${product.description},
-                                data-price=${product.price},
-                                data-stock=${product.stockQuantity},
-                                data-image-url=${product.imageUrl}">
-                        수정
-                    </button>
-
-                    <form method="post"
-                          th:action="@{/admin/products/{id}/delete(id=${product.id})}">
-                        <button type="submit"
-                                class="secondary-button">
-                            삭제
+                    <div class="admin-product-actions">
+                        <button type="button"
+                                class="secondary-button edit-product-button"
+                                th:attr="data-id=${product.id},
+                                         data-name=${product.name},
+                                         data-description=${product.description},
+                                         data-price=${product.price},
+                                         data-stock=${product.stockQuantity},
+                                         data-image-url=${product.imageUrl}">
+                            수정
                         </button>
-                    </form>
+
+                        <form method="post"
+                              th:action="@{/admin/products/{id}/delete(id=${product.id})}">
+                            <button type="submit"
+                                    class="secondary-button">
+                                삭제
+                            </button>
+                        </form>
+                    </div>
                 </article>
             </div>
         </section>
@@ -182,8 +191,8 @@
                 </div>
             </form>
         </aside>
-    </main>
-</div>
+    </div>
+</main>
 
 <script th:src="@{/js/product-admin.js}"></script>
 </body>
